@@ -1,7 +1,11 @@
-# Project Report
+# Project Report 
 
-## Requirements of the report
-- Maxiumum of 800 Words 
+> Last update 29th June 2026
+
+## Requirements of the report 
++ Maxiumum of 800 Words 
++ 
++ 
 
 ## Introduction 
 
@@ -16,15 +20,18 @@
 
 ## Workload Distribution
 
-| Date | Task
+| Date | Task |
 | ----  | ---- |
 | Project Start -  29.06 | theoratical part finished | 
 | 29.06 - 05.07 |implementation done |
 | by 19.07 | presentation and formatilities |
 
 
-### Arda
+> ### Arda
+    Write down project summary
 
-### Erdeniz
+> ### Erdeniz
+    Write down project summary
 
-### Noah
+> ### Noah
+    Write down project summary
