@@ -3,8 +3,7 @@
 
 
 
-//On 24.06.2026--third task of the theoretical part completed: designed the parallel algorithm for the SIMD unit. Created separate 4-wide vectors for the real part, imaginary part, and iteration count, so 4 ////pixels are processed simultaneously each iteration.
-
+//On 24.06.2026--third task of the theoretical part completed: designed the parallel algorithm for the SIMD unit. Created separate 4-wide vectors for the real part, imaginary part, and iteration count, so 4 //  pixels are processed simultaneously each iteration.
 
 
 
