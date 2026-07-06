@@ -8,9 +8,8 @@
 #include <complex.h>
 #include <stdbool.h>
 #include <stddef.h>
-#include <sys/_types/_ssize_t.h>
+#include <sys/types.h>
 #include <stdlib.h>
-
 
 void julia_Erdeniz (float complex c, float complex start, size_t width, ssize_t height, float res, unsigned n, bool color, unsigned char* img);
 
