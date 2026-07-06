@@ -33,6 +33,7 @@ b=new_b;
 i++;
 }
 
+
 unsigned char red,green, blue; 
 if (!color)
 {
