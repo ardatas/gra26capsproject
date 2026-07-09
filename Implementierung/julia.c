@@ -11,9 +11,6 @@
 void julia(float complex c, float complex start, size_t width, ssize_t height, float res, unsigned n, bool color, unsigned char* img) {
     printf("julia set\n");
 
-
-
-    
     /* code */
 }
 
