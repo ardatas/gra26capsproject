@@ -6,7 +6,7 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/_types/_ssize_t.h>
+#include <sys/types.h>
 
 
 void julia_Erdeniz (float complex c, float complex start, size_t width, ssize_t height, float res, unsigned n, bool color, unsigned char* img) {
@@ -20,7 +20,7 @@ for (size_t x = 0; x < width; x++) {
 
    size_t i=0;
   float a= crealf(start)+ res*x;
-float b= cimagf(start)+ (height<0? -res: res)*y;
+float b= cimagf(start)+ ((height<0) ? -res: res)*y;
 
 while ((a*a+ b*b)<4.0f && i<n)
 {
@@ -46,7 +46,7 @@ if (!color)
   else{
     brightness= (unsigned char)(255-4*(i%64));
   }
-  
+  size_t row_stride= (width+3) & ~3;
   size_t index= y*width+x;
   img[index]=brightness;   /* code */
 }
@@ -64,7 +64,7 @@ else{
     blue= 255.0f* (1.0f-proportion)* proportion*proportion*proportion*8.5f;
     /* code */
 }
-
+    size_t row_stride= (width*3+3) & ~3;
     size_t index= (y*width*3+(3*x));
     img[index]= red;
     img[index+1]= green;
