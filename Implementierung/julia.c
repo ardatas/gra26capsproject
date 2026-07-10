@@ -2,7 +2,7 @@
 // Created by Noah Schneider on 29.06.26.
 //
 
-#include "Noah/utils.h"
+#include "utils.h"
 #include <complex.h>
 #include <stdbool.h>
 #include <stddef.h>
