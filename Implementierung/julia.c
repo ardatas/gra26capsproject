@@ -108,11 +108,12 @@ void julia(float complex c, float complex start, size_t width, ssize_t height, f
 
     row_sizes(width, color, &raw_row_length, &row_length);
 
+    // TODO check to see why I did the for loop this way
     for (size_t y = 0; y < height_abs; ++y) {
         unsigned char* row = img + y * row_length;
         const float row_imag = start_imag + (float) y * step_y;
         size_t x = 0;
-
+        // x = 0 -> x = 4 -> x = 8 ... width 31 -> 28 -> x + 3 < 31
         for (; x + 3 < width; x += 4) {
             __m128 z_real = _mm_setr_ps( // 4.30 4.31 4.32 4.33
                 start_real + (float) x * res,
@@ -152,6 +153,7 @@ void julia(float complex c, float complex start, size_t width, ssize_t height, f
         }
 
         // remaining in row not divisable by 4
+        // TODO mention that sse here isn't worth it for readability and performance
         for (; x < width; ++x) {
             const float z_real = start_real + (float) x * res;
             const unsigned i = julia_iterations(z_real, row_imag, c_real, c_imag, n);
