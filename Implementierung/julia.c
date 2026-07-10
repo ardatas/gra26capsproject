@@ -55,6 +55,7 @@ static void row_sizes(size_t width, bool color, size_t* raw_row_length, size_t* 
     *row_length = *raw_row_length + padding;
 }
 
+// scalar
 void julia_single(float complex c, float complex start, size_t width, ssize_t height, float res, unsigned n, bool color, unsigned char* img) {
     const size_t height_abs = abs_height(height);
     size_t raw_row_length;
@@ -92,18 +93,18 @@ void julia(float complex c, float complex start, size_t width, ssize_t height, f
     size_t raw_row_length;
     size_t row_length;
     const float step_y = height < 0 ? -res : res;
-    const float c_real = crealf(c);
+    const float c_real = crealf(c); // 4.3
     const float c_imag = cimagf(c);
     const float start_real = crealf(start);
     const float start_imag = cimagf(start);
-    const __m128 c_real_v = _mm_set1_ps(c_real);
+    const __m128 c_real_v = _mm_set1_ps(c_real); // 4.3 4.3 4.3 4.3
     const __m128 c_imag_v = _mm_set1_ps(c_imag);
     // const for escape check
-    const __m128 four_v = _mm_set1_ps(4.0f);
+    const __m128 four_v = _mm_set1_ps(4.0f); // 4.0 4.0 4.0 4.0
     // const for iter formula
     const __m128 two_v = _mm_set1_ps(2.0f);
     // iter counter
-    const __m128 one_ps_v = _mm_castsi128_ps(_mm_set1_epi32(1));
+    const __m128 one_ps_v = _mm_castsi128_ps(_mm_set1_epi32(1)); // 0b1 0b1 0b1 0b1
 
     row_sizes(width, color, &raw_row_length, &row_length);
 
@@ -113,28 +114,29 @@ void julia(float complex c, float complex start, size_t width, ssize_t height, f
         size_t x = 0;
 
         for (; x + 3 < width; x += 4) {
-            __m128 z_real = _mm_setr_ps(
+            __m128 z_real = _mm_setr_ps( // 4.30 4.31 4.32 4.33
                 start_real + (float) x * res,
                 start_real + (float) (x + 1) * res,
                 start_real + (float) (x + 2) * res,
                 start_real + (float) (x + 3) * res
             );
-            __m128 z_imag = _mm_set1_ps(row_imag);
-            __m128i counts = _mm_setzero_si128();
+            __m128 z_imag = _mm_set1_ps(row_imag); // .. .. .. ..
+            __m128i counts = _mm_setzero_si128(); // 0x000000 0x000000 0x000000 0x000000
 
             for (unsigned iteration = 0; iteration < n; ++iteration) {
                 const __m128 real_squared = _mm_mul_ps(z_real, z_real);
                 const __m128 imag_squared = _mm_mul_ps(z_imag, z_imag);
-                const __m128 magnitude_squared = _mm_add_ps(real_squared, imag_squared);
+                const __m128 magnitude_squared = _mm_add_ps(real_squared, imag_squared); // 3.93 3.96 3.99 4.02
 
                 // check to see if any haven't diverged yet
-                const __m128 active = _mm_cmple_ps(magnitude_squared, four_v);
+                const __m128 active = _mm_cmple_ps(magnitude_squared, four_v); // 0x000000 0xffffff 0xffffff 0x000000 // 0x000000 0x000000 0x000000 0x000000 0x000000000000000000000000
 
-                if (_mm_movemask_ps(active) == 0) {
+                if (_mm_movemask_ps(active) == 0) { // 0x0000
                     break;
                 }
 
-                counts = _mm_add_epi32(counts, _mm_castps_si128(_mm_and_ps(active, one_ps_v)));
+                counts = _mm_add_epi32(counts, _mm_castps_si128(_mm_and_ps(active, one_ps_v))); // 0b0 0b1 0b1 0b0 -> 0x000000 0x000001 0x000001 0x000000
+                // counts : // 0x000001 0x000002 0x000002 0x000000
 
                 const __m128 next_real = _mm_add_ps(_mm_sub_ps(real_squared, imag_squared), c_real_v);
                 const __m128 next_imag = _mm_add_ps(_mm_mul_ps(two_v, _mm_mul_ps(z_real, z_imag)), c_imag_v);
