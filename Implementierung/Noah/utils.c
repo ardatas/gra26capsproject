@@ -313,8 +313,9 @@ int write_bmp(const char* filename, ssize_t width, ssize_t height, bool color, c
         return EXIT_FAILURE;
     }
 
+    // TODO note in the projektbericht the difference between defining a color palette and just using 24 bit for non color
     if (!color) {
-        // color palette with grayscale (0x000000 to 0xFFFFFFFF with equal r g and b values)
+        // color palette with grayscale (0x000000 to 0xFFFFFF with equal r g and b values)
         for (uint32_t i = 0; i < 256; ++i) {
             fputc((int) i, file);
             fputc((int) i, file);

@@ -36,7 +36,8 @@ static void write_pixel(unsigned char* row, size_t x, unsigned i, unsigned n, bo
 static unsigned julia_iterations(float z_real, float z_imag, float c_real, float c_imag, unsigned n) {
     unsigned i = 0;
 
-    while (i < n && z_real * z_real + z_imag * z_imag <= 4.0f) {
+    // TODO check if smaller than 4.0f is more accurate than smaller equal to 4.0f
+    while (i < n && z_real * z_real + z_imag * z_imag < 4.0f) {
         const float next_real = z_real * z_real - z_imag * z_imag + c_real;
         const float next_imag = 2.0f * z_real * z_imag + c_imag;
         z_real = next_real;
@@ -76,6 +77,7 @@ void julia_single(float complex c, float complex start, size_t width, ssize_t he
             write_pixel(row, x, i, n, color);
         }
 
+        // TODO check performance against memset
         for (size_t x = raw_row_length; x < row_length; ++x) {
             row[x] = 0;
         }
