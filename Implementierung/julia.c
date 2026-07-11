@@ -37,7 +37,7 @@ static unsigned julia_iterations(float z_real, float z_imag, float c_real, float
     unsigned i = 0;
 
     // TODO check if smaller than 4.0f is more accurate than smaller equal to 4.0f
-    while (i < n && z_real * z_real + z_imag * z_imag < 4.0f) {
+    while (i < n && z_real * z_real + z_imag * z_imag <= 4.0f) {
         const float next_real = z_real * z_real - z_imag * z_imag + c_real;
         const float next_imag = 2.0f * z_real * z_imag + c_imag;
         z_real = next_real;
