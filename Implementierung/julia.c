@@ -56,7 +56,7 @@ static void row_sizes(size_t width, bool color, size_t* raw_row_length, size_t* 
 }
 
 // scalar
-void julia_single(float complex c, float complex start, size_t width, ssize_t height, float res, unsigned n, bool color, unsigned char* img) {
+void julia_V1(float complex c, float complex start, size_t width, ssize_t height, float res, unsigned n, bool color, unsigned char* img) {
     const size_t height_abs = abs_height(height);
     size_t raw_row_length;
     size_t row_length;
@@ -87,7 +87,7 @@ void julia_single(float complex c, float complex start, size_t width, ssize_t he
 
 void julia(float complex c, float complex start, size_t width, ssize_t height, float res, unsigned n, bool color, unsigned char* img) {
 #if !defined(__SSE2__)
-    julia_single(c, start, width, height, res, n, color, img);
+    julia_V1(c, start, width, height, res, n, color, img);
 #else
     const size_t height_abs = abs_height(height);
     size_t raw_row_length;

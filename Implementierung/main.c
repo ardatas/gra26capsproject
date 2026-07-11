@@ -78,7 +78,7 @@ int main(int argc, char * argv[]) {
                 julia(c, start, image_width, height, res, n, color, img);
                 break;
             case 1:
-                julia_single(c, start, image_width, height, res, n, color, img);
+                julia_V1(c, start, image_width, height, res, n, color, img);
                 break;
             default:
                 fprintf(stderr, "Only implementation versions 0 and 1 are available\n");
