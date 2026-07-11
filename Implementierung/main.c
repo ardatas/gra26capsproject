@@ -1,7 +1,9 @@
 //
 // Created by Noah Schneider on 29.06.26.
+// Edit by Arda Tas on 11.07.26.
 //
 
+#define _POSIX_C_SOURCE 200809L 
 #include "julia.h"
 #include "utils.h"
 #include <stdio.h>
@@ -71,7 +73,16 @@ int main(int argc, char * argv[]) {
     }
 
     const int runs = benchmark_runs > 0 ? benchmark_runs : 1;
-    const clock_t start_time = clock();
+
+    struct timespec start_time;
+    struct timespec end_time;
+
+    if (benchmark_runs > 0 && clock_gettime(CLOCK_MONOTONIC, &start_time) == -1) {
+        perror("clock_gettime");
+        free(img);
+        return EXIT_FAILURE;
+    }
+
     for (int i = 0; i < runs; ++i) {
         switch (version) {
             case 0:
@@ -86,12 +97,21 @@ int main(int argc, char * argv[]) {
                 return EXIT_FAILURE;
         }
     }
-    const clock_t end_time = clock();
+    
+
+    if (benchmark_runs > 0 && clock_gettime(CLOCK_MONOTONIC, &end_time) == -1) {
+        perror("clock_gettime");
+        free(img);
+        return EXIT_FAILURE;
+    }
 
     if (benchmark_runs > 0) {
-        const double seconds = (double) (end_time - start_time) / CLOCKS_PER_SEC;
+        double elapsed_time = 
+            (double) (end_time.tv_sec - start_time.tv_sec) + 
+            (double) (end_time.tv_nsec - start_time.tv_nsec) / 1e9;
+        
         printf("Benchmark: %d runs in %.6f seconds (%.6f seconds per run)\n",
-               runs, seconds, seconds / runs);
+               runs, elapsed_time, elapsed_time / runs);
     }
 
     const int status = write_bmp(output_filename, width, height, color, img);
