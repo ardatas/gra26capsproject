@@ -31,6 +31,10 @@
     Write down project summary
 
 > ### Erdeniz
+Both variants(for-loop vs. memset for BMP row padding) were measured twice each with identical parameters -d 2000, -2000, -B 1000. The measured runtime for both implementations is around 28.65-28.95s. 
+The difference between the versions lies within meausrement variance and is therefore statistically not significant. So, switching to memset provides no measurable performance benefit.
+
+
     Write down project summary
 
 > ### Noah

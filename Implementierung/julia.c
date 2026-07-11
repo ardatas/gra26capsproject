@@ -1,7 +1,7 @@
 //
 // Created by Noah Schneider on 29.06.26.
 //
-
+#include <string.h>
 #include "utils.h"
 #include <complex.h>
 #include <stdbool.h>
@@ -84,6 +84,34 @@ void julia_V1(float complex c, float complex start, size_t width, ssize_t height
         }
     }
 }
+
+void julia_V2(float complex c, float complex start, size_t width, ssize_t height, float res, unsigned n, bool color, unsigned char* img) {
+    const size_t height_abs = abs_height(height);
+    size_t raw_row_length;
+    size_t row_length;
+    const float step_y = height < 0 ? -res : res;
+    const float c_real = crealf(c);
+    const float c_imag = cimagf(c);
+    const float start_real = crealf(start);
+    const float start_imag = cimagf(start);
+
+    row_sizes(width, color, &raw_row_length, &row_length);
+
+    for (size_t y = 0; y < height_abs; ++y) {
+        unsigned char* row = img + y * row_length;
+
+        for (size_t x = 0; x < width; ++x) {
+            const float z_real = start_real + (float) x * res;
+            const float z_imag = start_imag + (float) y * step_y;
+            const unsigned i = julia_iterations(z_real, z_imag, c_real, c_imag, n);
+            write_pixel(row, x, i, n, color);
+        }
+
+        // TODO check performance against memset
+        memset(row+ raw_row_length, 0, row_length-raw_row_length);
+        }
+    }
+
 
 void julia(float complex c, float complex start, size_t width, ssize_t height, float res, unsigned n, bool color, unsigned char* img) {
 #if !defined(__SSE2__)
