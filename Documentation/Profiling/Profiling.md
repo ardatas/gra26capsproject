@@ -8,7 +8,6 @@ Perform a cold reboot (Restart PC)
 
 # During Profiling 
 
-
 # After Profiling
 
 Note down the runtime

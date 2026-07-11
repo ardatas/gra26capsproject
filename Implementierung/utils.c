@@ -37,14 +37,14 @@ size_t abs_height(ssize_t height) {
 static void print_help(void) {
     printf("Help Message\n");
     printf("  -V <number>                 implementation version (default is 0)\n");
-    printf("  -B <number>                 benchmark repetitions (default is 1)\n");
+    printf("  -B <number>                 benchmark repetitions (default is 0)\n");
     printf("  -s <real>,<imag>            start point\n");
     printf("  -d <width>,<height>         image dimensions in pixels\n");
     printf("  -n <number>                 maximum iterations per pixel\n");
     printf("  -r <number>                 resolution per pixel\n");
     printf("  -c <real>,<imag>            julia constant c\n");
     printf("  -o <filename>               output BMP file\n");
-    printf("  -C, --color                 enable color output\n");
+    printf("  -C, --color                 enable color output (default is grayscale)\n");
     printf("  -t, --test                  run tests\n");
     printf("  -h, --help                  show this help\n");
 }

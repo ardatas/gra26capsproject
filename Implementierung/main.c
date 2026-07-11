@@ -18,7 +18,7 @@ int main(int argc, char * argv[]) {
     ssize_t height = -600;
     float res = 0.005f;
     unsigned n = 100;
-    bool color = true;
+    bool color = false;
     const char* output_filename = "output.bmp";
     bool run_test = false;
     bool should_exit = false;
