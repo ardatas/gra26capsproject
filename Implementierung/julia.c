@@ -151,6 +151,7 @@ void julia(float complex c, float complex start, size_t width, ssize_t height, f
             );
             __m128 z_imag = _mm_set1_ps(row_imag); // .. .. .. ..
             __m128i counts = _mm_setzero_si128(); // 0x000000 0x000000 0x000000 0x000000
+            __m128 active = _mm_castsi128_ps(_mm_set1_epi32(-1));
 
             for (unsigned iteration = 0; iteration < n; ++iteration) {
                 const __m128 real_squared = _mm_mul_ps(z_real, z_real);
@@ -158,7 +159,7 @@ void julia(float complex c, float complex start, size_t width, ssize_t height, f
                 const __m128 magnitude_squared = _mm_add_ps(real_squared, imag_squared); // 3.93 3.96 3.99 4.02
 
                 // check to see if any haven't diverged yet
-                const __m128 active = _mm_cmple_ps(magnitude_squared, four_v); // 0x000000 0xffffff 0xffffff 0x000000 // 0x000000 0x000000 0x000000 0x000000 0x000000000000000000000000
+                active = _mm_and_ps(active, inside);  // 0x000000 0xffffff 0xffffff 0x000000 // 0x000000 0x000000 0x000000 0x000000 0x000000000000000000000000
 
                 if (_mm_movemask_ps(active) == 0) { // 0x0000
                     break;
