@@ -1,0 +1,3 @@
+V0: trials=5, mean=0.005543 s/run (5.543 ms), sample_sd=0.000024 s (0.024 ms)
+V1: trials=5, mean=0.023727 s/run (23.727 ms), sample_sd=0.000042 s (0.042 ms)
+Speedup V1/V0: 4.281x
