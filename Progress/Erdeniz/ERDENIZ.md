@@ -8,3 +8,4 @@
 
 
 //On 01.07.2026-- updated the presentation by preparing the title slide, content/agenda slide
+// On 12.07.2026-- all formulas from the theoretical section were written in LaTeX.
