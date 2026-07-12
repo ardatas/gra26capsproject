@@ -159,6 +159,7 @@ void julia(float complex c, float complex start, size_t width, ssize_t height, f
                 const __m128 magnitude_squared = _mm_add_ps(real_squared, imag_squared); // 3.93 3.96 3.99 4.02
 
                 // check to see if any haven't diverged yet
+                const __m128 inside = _mm_cmple_ps(magnitude_squared, four_v);
                 active = _mm_and_ps(active, inside);  // 0x000000 0xffffff 0xffffff 0x000000 // 0x000000 0x000000 0x000000 0x000000 0x000000000000000000000000
 
                 if (_mm_movemask_ps(active) == 0) { // 0x0000
