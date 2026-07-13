@@ -15,16 +15,24 @@ ITERS="200"
 REPS="5"      # -B
 TRIALS="5"    # how many times we call the binary per version
 
+LOG="$SCRIPT_DIR/benchmark-$(date +%Y-%m-%d).log"
+
 cd "$IMPL_DIR"
 make >/dev/null
 
-echo "params: -d $DIMS -r $RES -n $ITERS -B $REPS   trials: $TRIALS"
-echo
-
-for V in 0 1; do
-    echo "--- V$V ---"
-    for i in $(seq 1 "$TRIALS"); do
-        ./project -V "$V" -B "$REPS" -d "$DIMS" -r "$RES" -n "$ITERS" -o /dev/null
-    done
+{
+    echo "date:   $(date -Iseconds)"
+    echo "host:   $(hostname)"
+    echo "params: -d $DIMS -r $RES -n $ITERS -B $REPS   trials: $TRIALS"
     echo
-done
+
+    for V in 0 1; do
+        echo "--- V$V ---"
+        for i in $(seq 1 "$TRIALS"); do
+            ./project -V "$V" -B "$REPS" -d "$DIMS" -r "$RES" -n "$ITERS" -o /dev/null
+        done
+        echo
+    done
+} | tee "$LOG"
+
+echo "results written to $LOG"
