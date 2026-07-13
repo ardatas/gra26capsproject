@@ -54,10 +54,11 @@ int main(int argc, char * argv[]) {
         fprintf(stderr, "Width must be positive and height must not be zero\n");
         return EXIT_FAILURE;
     }
-    if (n == 0) {
-        fprintf(stderr, "Number of iterations must be positive\n");
-        return EXIT_FAILURE;
-    }
+    // Commented out because 0 is a valid arg -> black pixel
+    // if (n == 0) {
+    //     fprintf(stderr, "Number of iterations must be positive\n");
+    //     return EXIT_FAILURE;
+    // }
 
     const size_t image_width = (size_t) width;
     const size_t image_height = abs_height(height);
