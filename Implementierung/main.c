@@ -91,11 +91,8 @@ int main(int argc, char * argv[]) {
             case 1:
                 julia_V1(c, start, image_width, height, res, n, color, img);
                 break;
-                case 2:
-                 julia_V2(c, start, image_width, height, res, n, color, img);
-                break;
             default:
-                fprintf(stderr, "Only implementation versions 0,1 and 2 are available\n");
+                fprintf(stderr, "Only implementation versions 0 and 1 are available\n");
                 free(img);
                 return EXIT_FAILURE;
         }
