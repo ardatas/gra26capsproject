@@ -1,5 +1,7 @@
 # P0: V0 SIMD active mask
 
+This is a correctness bug fix in the optimized SIMD implementation, not a performance optimization. It ensures that V0 produces the same iteration counts as the scalar V1 implementation.
+
 ## Old code
 
 ```c
@@ -31,7 +33,7 @@ for (unsigned iteration = 0; iteration < n; ++iteration) {
 
 V1 stops a pixel permanently once it has escaped. Therefore V0 and V1 can produce different BMP pixels.
 
-## Improved code
+## Fixed code
 
 ```c
 __m128i counts = _mm_setzero_si128();

@@ -1,4 +1,0 @@
-577808befc2c2035ea7cf6da18aa089f4958553419fe0924cbd1e013cbbcee57  correctness/color-v0.bmp
-577808befc2c2035ea7cf6da18aa089f4958553419fe0924cbd1e013cbbcee57  correctness/color-v1.bmp
-7aefd3202fa805c1224efae4c93e59d3bba3d7356194581f48623c05ac403fda  correctness/default-v0.bmp
-7aefd3202fa805c1224efae4c93e59d3bba3d7356194581f48623c05ac403fda  correctness/default-v1.bmp

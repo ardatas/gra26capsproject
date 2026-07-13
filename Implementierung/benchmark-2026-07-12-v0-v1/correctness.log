@@ -1,4 +1,0 @@
-PASS: default_gray V0 equals V1
-PASS: escaped_lane V0 equals V1
-PASS: simd_tail V0 equals V1
-PASS: default_color V0 equals V1
