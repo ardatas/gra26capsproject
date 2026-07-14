@@ -66,12 +66,6 @@ int main(int argc, char * argv[]) {
         return EXIT_FAILURE;
     }
 
-    // Commented out because 0 is a valid arg -> black pixel
-    // if (n == 0) {
-    //     fprintf(stderr, "Number of iterations must be positive\n");
-    //     return EXIT_FAILURE;
-    // }
-
     const size_t image_width = (size_t) width;
     const size_t image_height = abs_height(height);
     const size_t bytes_per_pixel = color ? 3 : 1;

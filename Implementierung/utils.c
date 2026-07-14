@@ -272,7 +272,7 @@ int write_bmp(const char* filename, ssize_t width, ssize_t height, bool color, c
     const size_t pixel_offset = 14 + 40 + palette_size;
     const size_t file_size = pixel_offset + pixel_data_size;
 
-    if (width > INT32_MAX || height < INT32_MIN || height > INT32_MAX ||
+    if (width > INT32_MAX || height < -(ssize_t) INT32_MAX || height > INT32_MAX ||
         file_size > UINT32_MAX || pixel_data_size > UINT32_MAX) {
         fprintf(stderr, "Image dimensions are too large for BMP output\n");
         return EXIT_FAILURE;
