@@ -6,6 +6,7 @@
 #define _POSIX_C_SOURCE 200809L 
 #include "julia.h"
 #include "utils.h"
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -34,6 +35,11 @@ int main(int argc, char * argv[]) {
         return EXIT_SUCCESS;
     }
 
+    if (version != 0 && version != 1) {
+        fprintf(stderr, "Only implementation versions 0 and 1 are available\n");
+        return EXIT_FAILURE;
+    }
+
     if (benchmark_runs < 0) {
         fprintf(stderr, "Benchmark repetitions must not be negative\n");
         return EXIT_FAILURE;
@@ -54,6 +60,12 @@ int main(int argc, char * argv[]) {
         fprintf(stderr, "Width must be positive and height must not be zero\n");
         return EXIT_FAILURE;
     }
+
+    if (width > INT32_MAX || height < -(ssize_t) INT32_MAX || height > INT32_MAX) {
+        fprintf(stderr, "Image dimensions are too large for BMP output\n");
+        return EXIT_FAILURE;
+    }
+
     // Commented out because 0 is a valid arg -> black pixel
     // if (n == 0) {
     //     fprintf(stderr, "Number of iterations must be positive\n");
@@ -66,7 +78,16 @@ int main(int argc, char * argv[]) {
     const size_t raw_row_length = image_width * bytes_per_pixel;
     const size_t padding = (4 - raw_row_length % 4) % 4;
     const size_t row_stride = raw_row_length + padding;
-    unsigned char* img = malloc(row_stride * image_height);
+    const size_t palette_size = color ? 0 : 256 * 4;
+    const size_t pixel_offset = 14 + 40 + palette_size;
+    const size_t pixel_data_size = row_stride * image_height;
+
+    if (pixel_data_size > UINT32_MAX - pixel_offset) {
+        fprintf(stderr, "Image dimensions are too large for BMP output\n");
+        return EXIT_FAILURE;
+    }
+
+    unsigned char* img = malloc(pixel_data_size);
 
     if (img == NULL) {
         fprintf(stderr, "Could not allocate image buffer\n");
@@ -85,17 +106,10 @@ int main(int argc, char * argv[]) {
     }
 
     for (int i = 0; i < runs; ++i) {
-        switch (version) {
-            case 0:
-                julia(c, start, image_width, height, res, n, color, img);
-                break;
-            case 1:
-                julia_V1(c, start, image_width, height, res, n, color, img);
-                break;
-            default:
-                fprintf(stderr, "Only implementation versions 0 and 1 are available\n");
-                free(img);
-                return EXIT_FAILURE;
+        if (version == 0) {
+            julia(c, start, image_width, height, res, n, color, img);
+        } else {
+            julia_V1(c, start, image_width, height, res, n, color, img);
         }
     }
     
