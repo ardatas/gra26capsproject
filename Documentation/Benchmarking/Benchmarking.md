@@ -72,7 +72,5 @@ machine may be shared and noisy.
 
 ## Notes
 
-- The script produces raw measurements only; it does not compute statistics.
-- `-t/--test` in the program runs the same scenarios from within the binary and
-  is the required in-program test suite; this script is the reproducibility
-  harness around it.
+- Correctness is not checked by this script. Compare BMP outputs separately
+  with `cmp` when a version changes.
