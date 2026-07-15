@@ -36,7 +36,10 @@ static void write_pixel(unsigned char* row, size_t x, unsigned i, unsigned n, bo
 static unsigned julia_iterations(float z_real, float z_imag, float c_real, float c_imag, unsigned n) {
     unsigned i = 0;
 
-    // TODO check if smaller than 4.0f is more accurate than smaller equal to 4.0f
+    // TODO check if < 4.0f is more accurate than <= to 4.0f
+
+    // Use <= 4.0f because escape is guaranteed only once |z|^2 > 4
+    // Points exactly on the radius-2 boundary are not outside the escape circle (source: https://www.mrob.com/pub/muency/escaperadius.html)
     while (i < n && z_real * z_real + z_imag * z_imag <= 4.0f) {
         const float next_real = z_real * z_real - z_imag * z_imag + c_real;
         const float next_imag = 2.0f * z_real * z_imag + c_imag;
@@ -108,7 +111,7 @@ void julia(float complex c, float complex start, size_t width, ssize_t height, f
 
     row_sizes(width, color, &raw_row_length, &row_length);
 
-    // TODO check to see why I did the for loop this way
+    // y is the zero-based row index in img, so row 0 uses start_imag and no buffer offset
     for (size_t y = 0; y < height_abs; ++y) {
         unsigned char* row = img + y * row_length;
         const float row_imag = start_imag + (float) y * step_y;
