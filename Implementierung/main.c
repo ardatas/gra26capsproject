@@ -83,7 +83,7 @@ int main(int argc, char * argv[]) {
  
     if (height < -(ssize_t) INT32_MAX)
     {
-        fprintf(stderr, "height cannot be smaller than  %d\n, INT32_MAX");
+        fprintf(stderr, "height cannot be smaller than  %d\n, -INT32_MAX");
         return EXIT_FAILURE;
         /* code */
     }
