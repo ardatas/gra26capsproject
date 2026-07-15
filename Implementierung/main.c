@@ -40,6 +40,7 @@ int main(int argc, char * argv[]) {
         return EXIT_FAILURE;
     }
 
+
     if (benchmark_runs < 0) {
         fprintf(stderr, "Benchmark repetitions must not be negative\n");
         return EXIT_FAILURE;
@@ -56,10 +57,18 @@ int main(int argc, char * argv[]) {
         output_filename = "test_output.bmp";
     }
 
-    if (width <= 0 || height == 0) {
-        fprintf(stderr, "Width must be positive and height must not be zero\n");
+    if (height == 0) {
+        fprintf(stderr, "Height must not be zero\n");
         return EXIT_FAILURE;
     }
+    
+if (width<=0)
+{
+    fprintf(stderr, "Width must be positive");
+    return EXIT_FAILURE;/* code */
+}
+
+
 
     if (width > INT32_MAX || height < -(ssize_t) INT32_MAX || height > INT32_MAX) {
         fprintf(stderr, "Image dimensions are too large for BMP output\n");
