@@ -19,7 +19,7 @@ SCENARIOS=(
 )
 
 # Edge cases that only go through the correctness gate, never the timing.
-# escaped_lane: c=1,1 makes every point escape after a few iterations, at
+# escaped_lane: c=1,1 exercises lanes that escape after different iterations.
 # bottom_up: positive height, start at the bottom so the view still covers the set.
 # n_zero: zero iterations, the whole image stays at i == n.
 GATE_SCENARIOS=(
@@ -82,7 +82,10 @@ for scenario in "${SCENARIOS[@]}" "${GATE_SCENARIOS[@]}"; do
         exit 1
     fi
 done
-sha256sum "$CORRECTNESS_DIR"/*.bmp > "$CORRECTNESS_DIR/SHA256SUMS.txt"
+(
+    cd "$CORRECTNESS_DIR"
+    sha256sum ./*.bmp > SHA256SUMS.txt
+)
 
 # Timing: 5 trials per scenario, alternating which version goes first.
 echo "=== Timings ===" | tee -a "$RESULTS_LOG"
