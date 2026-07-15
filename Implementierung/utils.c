@@ -45,7 +45,7 @@ static void print_help(void) {
     printf("  -c <real>,<imag>            julia constant c\n");
     printf("  -o <filename>               output BMP file\n");
     printf("  -C, --color                 enable color output (default is grayscale)\n");
-    printf("  -t, --test                  run tests\n");
+    printf("  -t, --test                  run the benchmark test suite\n");
     printf("  -h, --help                  show this help\n");
 }
 
