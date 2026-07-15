@@ -6,6 +6,7 @@
 #define _POSIX_C_SOURCE 200809L 
 #include "julia.h"
 #include "utils.h"
+#include <math.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -174,42 +175,35 @@ int main(int argc, char * argv[]) {
         return EXIT_FAILURE;
     }
 
-    if (width<=0)
-    {
-        fprintf(stderr, "Width must not be zero, as it would result in \n an image with no area (width is unsigned, so it cannot be negative)\n");
-        return EXIT_FAILURE;/* code */
+    if (width <= 0) {
+        fprintf(stderr, "Width must be positive, as the image needs at least one column\n");
+        return EXIT_FAILURE;
     }
 
-    if (res==0)
-    {
-        fprintf(stderr, "Resolution cannot be zero, as this would result in \n every pixel mapping to the same point\n");
-        return EXIT_FAILURE;/* code */
+    if (res == 0) {
+        fprintf(stderr, "Resolution must not be zero, as it would map every pixel to the same point\n");
+        return EXIT_FAILURE;
     }
 
-
+    if (!isfinite(res)) {
+        fprintf(stderr, "Resolution must be a finite number\n");
+        return EXIT_FAILURE;
+    }
 
     if (width > INT32_MAX) {
-        fprintf(stderr, "width cannnot be greater than  %d\n, INT32_MAX\n");
+        fprintf(stderr, "Width must not be greater than %d for BMP output\n", INT32_MAX);
         return EXIT_FAILURE;
     }
- 
-    if (height < -(ssize_t) INT32_MAX)
-    {
-        fprintf(stderr, "height cannot be smaller than  %d\n, -INT32_MAX");
+
+    if (height < -(ssize_t) INT32_MAX) {
+        fprintf(stderr, "Height must not be smaller than %d for BMP output\n", -INT32_MAX);
         return EXIT_FAILURE;
-        /* code */
     }
 
-     if (height > INT32_MAX)
-    {
-        fprintf(stderr, "height cannot be greater than %d\n, INT32_MAX");
+    if (height > INT32_MAX) {
+        fprintf(stderr, "Height must not be greater than %d for BMP output\n", INT32_MAX);
         return EXIT_FAILURE;
-        /* code */
     }
-    
-
-
-
 
 
     const size_t image_width = (size_t) width;
