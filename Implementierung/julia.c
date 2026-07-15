@@ -37,7 +37,6 @@ static unsigned julia_iterations(float z_real, float z_imag, float c_real, float
     unsigned i = 0;
 
     // TODO check if < 4.0f is more accurate than <= to 4.0f
-
     // Use <= 4.0f because escape is guaranteed only once |z|^2 > 4
     // Points exactly on the radius-2 boundary are not outside the escape circle (source: https://www.mrob.com/pub/muency/escaperadius.html)
     while (i < n && z_real * z_real + z_imag * z_imag <= 4.0f) {
@@ -81,10 +80,7 @@ void julia_V1(float complex c, float complex start, size_t width, ssize_t height
             write_pixel(row, x, i, n, color);
         }
 
-        // TODO check performance against memset
-        for (size_t x = raw_row_length; x < row_length; ++x) {
-            row[x] = 0;
-        }
+        memset(row+ raw_row_length, 0, row_length-raw_row_length);
     }
 }
 
