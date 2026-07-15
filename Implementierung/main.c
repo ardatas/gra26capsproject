@@ -68,6 +68,12 @@ if (width<=0)
     return EXIT_FAILURE;/* code */
 }
 
+if (res==0)
+{
+    fprintf(stderr, "Resolution cannot be zero, as this would result in every pixel mapping to the same point");
+    return EXIT_FAILURE;/* code */
+}
+
 
 
     if (width > INT32_MAX || height < -(ssize_t) INT32_MAX || height > INT32_MAX) {
