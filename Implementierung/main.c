@@ -187,7 +187,6 @@ int main(int argc, char * argv[]) {
     }
 
 
-
     if (width > INT32_MAX) {
         fprintf(stderr, "width cannnot be greater than  %d\n, INT32_MAX\n");
         return EXIT_FAILURE;
