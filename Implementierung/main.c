@@ -58,13 +58,13 @@ int main(int argc, char * argv[]) {
     }
 
     if (height == 0) {
-        fprintf(stderr, "Height must not be zero\n");
+        fprintf(stderr, "Height must not be zero, as it would result in an image with no area\n");
         return EXIT_FAILURE;
     }
-    
+
 if (width<=0)
 {
-    fprintf(stderr, "Width must be positive");
+    fprintf(stderr, "Width must not be zero, as it would result in an image with no area (width is unsigned, so it cannot be negative)\n");
     return EXIT_FAILURE;/* code */
 }
 
