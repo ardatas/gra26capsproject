@@ -174,24 +174,43 @@ int main(int argc, char * argv[]) {
         return EXIT_FAILURE;
     }
 
-if (width<=0)
-{
-    fprintf(stderr, "Width must not be zero, as it would result in an image with no area (width is unsigned, so it cannot be negative)\n");
-    return EXIT_FAILURE;/* code */
-}
+    if (width<=0)
+    {
+        fprintf(stderr, "Width must not be zero, as it would result in \n an image with no area (width is unsigned, so it cannot be negative)\n");
+        return EXIT_FAILURE;/* code */
+    }
 
-if (res==0)
-{
-    fprintf(stderr, "Resolution cannot be zero, as this would result in every pixel mapping to the same point");
-    return EXIT_FAILURE;/* code */
-}
+    if (res==0)
+    {
+        fprintf(stderr, "Resolution cannot be zero, as this would result in \n every pixel mapping to the same point\n");
+        return EXIT_FAILURE;/* code */
+    }
 
 
 
-    if (width > INT32_MAX || height < -(ssize_t) INT32_MAX || height > INT32_MAX) {
-        fprintf(stderr, "Image dimensions are too large for BMP output\n");
+    if (width > INT32_MAX) {
+        fprintf(stderr, "width cannnot be greater than  %d\n, INT32_MAX\n");
         return EXIT_FAILURE;
     }
+ 
+    if (height < -(ssize_t) INT32_MAX)
+    {
+        fprintf(stderr, "height cannot be smaller than  %d\n, -INT32_MAX");
+        return EXIT_FAILURE;
+        /* code */
+    }
+
+     if (height > INT32_MAX)
+    {
+        fprintf(stderr, "height cannot be greater than %d\n, INT32_MAX");
+        return EXIT_FAILURE;
+        /* code */
+    }
+    
+
+
+
+
 
     const size_t image_width = (size_t) width;
     const size_t image_height = abs_height(height);
