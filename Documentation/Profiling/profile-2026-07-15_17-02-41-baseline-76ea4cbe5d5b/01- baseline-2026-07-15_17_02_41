@@ -1,0 +1,21 @@
+ perf stat -e cycles:u,instructions:u,branches:u,branch-misses:u,cache-misses:u \
+  ./project -V 0 -B 100 -d 800,-600 -r 0.005 -n 100 \
+  -s -2,1.5 -c -0.5125,0.5213 -o /dev/null
+
+     2,056,342,119      cycles:u                                                              
+     5,248,095,190      instructions:u                   #    2.55  insn per cycle            
+       494,076,663      branches:u                                                            
+         1,567,807      branch-misses:u                  #    0.32% of all branches           
+            22,083      cache-misses:u                                                        
+
+       0.559033912 seconds time elapsed
+
+       0.554846000 seconds user
+       0.001995000 seconds sys
+
+
+perf record -e cycles:u -- \
+  ./project -V 0 -B 100 -d 800,-600 -r 0.005 -n 100 \
+  -s -2,1.5 -c -0.5125,0.5213 -o /dev/null
+
+perf report
