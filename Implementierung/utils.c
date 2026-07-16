@@ -45,12 +45,15 @@ static void print_help(void) {
     printf("  -s <real>,<imag>            start point\n");
     printf("  -d <width>,<height>         image dimensions in pixels\n");
     printf("  -n <number>                 maximum iterations per pixel\n");
+    printf("  -i, --check-interval <K>   check fully escaped SIMD blocks every K iterations\n");
+    printf("                              default is 1; supported by V0 only\n");
     printf("  -r <number>                 resolution per pixel\n");
     printf("  -c <real>,<imag>            julia constant c\n");
     printf("  -o <filename>               output BMP file\n");
     printf("  -C, --color                 enable color output (default is grayscale)\n");
     printf("  -t, --test                  run the benchmark test suite\n");
     printf("  -h, --help                  show this help\n");
+    printf("  Example: ./project -V 0 -i 8 -B 100 -o output.bmp\n");
 }
 
 static bool is_allowed_output_filename(const char* filename) {
@@ -169,10 +172,11 @@ static bool parse_ssize_pair_arg(const char* text, ssize_t* first, ssize_t* seco
 
 int parse_args(int argc, char* argv[], int* version, int* benchmark_runs, float complex* c,
                float complex* start, ssize_t* width, ssize_t* height, float* res,
-               unsigned* n, bool* color, const char** output_filename, bool* run_test,
-               bool* should_exit) {
+               unsigned* n, unsigned* check_interval, bool* check_interval_given,
+               bool* color, const char** output_filename, bool* run_test, bool* should_exit) {
     static struct option long_options[] = {
         {"color", no_argument, NULL, 'C'},
+        {"check-interval", required_argument, NULL, 'i'},
         {"help", no_argument, NULL, 'h'},
         {"test", no_argument, NULL, 't'},
         {0, 0, 0, 0},
@@ -180,7 +184,7 @@ int parse_args(int argc, char* argv[], int* version, int* benchmark_runs, float 
 
     optind = 1;
     int opt;
-    while ((opt = getopt_long(argc, argv, "V:B:s:d:n:r:c:o:Cht", long_options, NULL)) != -1) {
+    while ((opt = getopt_long(argc, argv, "V:B:s:d:n:i:r:c:o:Cht", long_options, NULL)) != -1) {
         switch (opt) {
             case 'V':
                 if (!parse_int_arg(optarg, version)) {
@@ -220,6 +224,13 @@ int parse_args(int argc, char* argv[], int* version, int* benchmark_runs, float 
                     fprintf(stderr, "Invalid -n value. Expected non-negative integer\n");
                     return EXIT_FAILURE;
                 }
+                break;
+            case 'i':
+                if (!parse_unsigned_arg(optarg, check_interval) || *check_interval == 0) {
+                    fprintf(stderr, "Invalid -i value. Expected positive integer\n");
+                    return EXIT_FAILURE;
+                }
+                *check_interval_given = true;
                 break;
             case 'r':
                 if (!parse_float_arg(optarg, res)) {

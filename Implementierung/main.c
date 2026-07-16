@@ -178,13 +178,16 @@ int main(int argc, char * argv[]) {
     ssize_t height = -600;
     float res = 0.005f;
     unsigned n = 100;
+    unsigned check_interval = 1;
+    bool check_interval_given = false;
     bool color = false;
     const char* output_filename = "output.bmp";
     bool run_test = false;
     bool should_exit = false;
 
     if (parse_args(argc, argv, &version, &benchmark_runs, &c, &start, &width, &height, &res,
-                   &n, &color, &output_filename, &run_test, &should_exit) != EXIT_SUCCESS) {
+                   &n, &check_interval, &check_interval_given, &color, &output_filename,
+                   &run_test, &should_exit) != EXIT_SUCCESS) {
         return EXIT_FAILURE;
     }
 
@@ -197,6 +200,12 @@ int main(int argc, char * argv[]) {
         return EXIT_FAILURE;
     }
 
+    if (check_interval_given && version != 0) {
+        fprintf(stderr, "Only implementation version 0 supports the check interval\n");
+        return EXIT_FAILURE;
+    }
+
+    julia_set_check_interval(check_interval);
 
     if (benchmark_runs < 0) {
         fprintf(stderr, "Benchmark repetitions must not be negative\n");
