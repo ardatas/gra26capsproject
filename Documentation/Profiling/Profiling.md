@@ -59,11 +59,38 @@ Every SIMD iteration performs this dependent sequence:
 
 Each step needs the result of the previous step. The processor therefore has fewer independent instructions available while it waits. The percentages belong to this whole region; sampling can place a sample a few instructions after the actual stall.
 
-### Possible first optimization
+### Possible optimizations
+
+#### A. Interleaving two four-pixel blocks
 
 A possible next step is to process two independent four-pixel blocks and interleave their iteration steps. While one block waits for a dependent result, the processor may execute instructions from the other block.
 
-This is only a hypothesis. The change may also increase register pressure. It must pass the V0/V1 correctness gate first, then be compared with the baseline benchmark and profiled again.
+This is only a hypothesis. The change may also increase register pressure.
+
+#### B. Strided active-lane check
+
+The `andps`/`movmskps`/`jne` region holds 66.37% of the grayscale samples and 52.77% of the color samples. The check has two parts:
+
+- The mask and count update (`active &= inside` and the count increment) is required every iteration for correct per-lane counts.
+- The early exit (`movmskps` and the branch) only decides when the whole block can stop. It does not change the counts.
+
+A possible change is to keep the mask and count update on every iteration, but evaluate the early exit only every `K` iterations. This shortens the repeated `cmple -> andps -> movmskps -> jne` dependency chain. In particular, `movmskps` moves the mask from the SIMD domain to an integer register on the critical path. This explanation is consistent with the measured 2.55 IPC and the low 0.32% branch-miss rate: the dependency chain looks more relevant than branch misprediction.
+
+The output should remain unchanged because the active mask has been monotonic since commit `3a6f4b8`. Once a lane becomes inactive, later iterations add zero to its count. Delaying the early exit therefore performs extra masked iterations without changing the final per-lane counts, so V0 should remain byte-identical to V1.
+
+The trade-off is up to `K - 1` wasted iterations after every lane in a block has escaped. `K` would need to be tested empirically. It will be exposed as a new command-line option so the values can be compared with the benchmark script.
+
+#### C. Masked count using subtraction
+
+The current count update, `counts += (active & 1)`, needs an AND, an ADD, and a register holding the vector of ones. An active lane contains all one bits, which is `-1` as a signed 32-bit integer. The same update can therefore be written as `counts - active`: subtracting `-1` increments an active lane, while subtracting zero leaves an inactive lane unchanged.
+
+This could remove one vector operation and free one register. The free register may also reduce the register pressure introduced by candidate A. The direct speedup is expected to be small and may not be measurable; the main reason to keep this candidate is its possible effect on register pressure.
+
+#### Validation order
+
+1. Run the V0/V1 correctness gate and require byte-identical output.
+2. Compare the result with the baseline using `benchmark.sh`.
+3. Re-profile the changed code with the precise `cycles:upp` event.
 
 ## Evidence limits
 
