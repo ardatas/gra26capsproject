@@ -36,7 +36,11 @@ size_t abs_height(ssize_t height) {
 
 static void print_help(void) {
     printf("Help Message\n");
-    printf("  -V <number>                 implementation version (default is 0)\n");
+    printf("  -V <0..3>                   implementation version (default is 0)\n");
+    printf("      0                       optimized SIMD main\n");
+    printf("      1                       SIMD with count-subtraction optimization\n");
+    printf("      2                       baseline SIMD\n");
+    printf("      3                       scalar reference\n");
     printf("  -B <number>                 benchmark repetitions (default is 0)\n");
     printf("  -s <real>,<imag>            start point\n");
     printf("  -d <width>,<height>         image dimensions in pixels\n");

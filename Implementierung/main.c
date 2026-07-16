@@ -37,13 +37,31 @@ static const BenchmarkScenario benchmark_scenarios[] = {
      -2.0f + 1.5f * I, -0.5125f + 0.5213f * I, false, 100},
 };
 
+enum {
+    IMPLEMENTATION_COUNT = 4,
+    REFERENCE_VERSION = 3,
+};
+
 static void run_version(int version, const BenchmarkScenario* scenario, unsigned char* img) {
-    if (version == 0) {
-        julia(scenario->c, scenario->start, (size_t) scenario->width, scenario->height,
-              scenario->res, scenario->n, scenario->color, img);
-    } else {
-        julia_V1(scenario->c, scenario->start, (size_t) scenario->width, scenario->height,
-                 scenario->res, scenario->n, scenario->color, img);
+    switch (version) {
+        case 0:
+            julia(scenario->c, scenario->start, (size_t) scenario->width, scenario->height,
+                  scenario->res, scenario->n, scenario->color, img);
+            break;
+        case 1:
+            julia_V1(scenario->c, scenario->start, (size_t) scenario->width, scenario->height,
+                     scenario->res, scenario->n, scenario->color, img);
+            break;
+        case 2:
+            julia_V2(scenario->c, scenario->start, (size_t) scenario->width, scenario->height,
+                     scenario->res, scenario->n, scenario->color, img);
+            break;
+        case 3:
+            julia_V3(scenario->c, scenario->start, (size_t) scenario->width, scenario->height,
+                     scenario->res, scenario->n, scenario->color, img);
+            break;
+        default:
+            break;
     }
 }
 
@@ -85,13 +103,13 @@ static int run_test_suite(void) {
         const size_t raw_row_length = width * bytes_per_pixel;
         const size_t row_length = raw_row_length + (4 - raw_row_length % 4) % 4;
         const size_t image_size = row_length * height;
-        unsigned char* v0_image = malloc(image_size);
-        unsigned char* v1_image = malloc(image_size);
+        unsigned char* reference_image = malloc(image_size);
+        unsigned char* version_image = malloc(image_size);
 
-        if (v0_image == NULL || v1_image == NULL) {
+        if (reference_image == NULL || version_image == NULL) {
             fprintf(stderr, "Could not allocate image buffers for test scenario %s\n", scenario->name);
-            free(v0_image);
-            free(v1_image);
+            free(reference_image);
+            free(version_image);
             return EXIT_FAILURE;
         }
 
@@ -103,28 +121,47 @@ static int run_test_suite(void) {
                (double) crealf(scenario->c), (double) cimagf(scenario->c),
                scenario->color ? "color" : "gray", scenario->repetitions);
 
-        double v0_time;
-        double v1_time;
-        if (measure_version(0, scenario, v0_image, &v0_time) != EXIT_SUCCESS ||
-            measure_version(1, scenario, v1_image, &v1_time) != EXIT_SUCCESS) {
-            free(v0_image);
-            free(v1_image);
+        double elapsed_times[IMPLEMENTATION_COUNT];
+        bool passed[IMPLEMENTATION_COUNT] = {false};
+
+        if (measure_version(REFERENCE_VERSION, scenario, reference_image,
+                            &elapsed_times[REFERENCE_VERSION]) != EXIT_SUCCESS) {
+            free(reference_image);
+            free(version_image);
             return EXIT_FAILURE;
         }
+        passed[REFERENCE_VERSION] = true;
 
-        const bool passed = memcmp(v0_image, v1_image, image_size) == 0;
-        all_passed = all_passed && passed;
+        for (int version = 0; version < REFERENCE_VERSION; ++version) {
+            if (measure_version(version, scenario, version_image,
+                                &elapsed_times[version]) != EXIT_SUCCESS) {
+                free(reference_image);
+                free(version_image);
+                return EXIT_FAILURE;
+            }
+
+            passed[version] = memcmp(version_image, reference_image, image_size) == 0;
+            all_passed = all_passed && passed[version];
+        }
 
         printf("Results:\n");
-        printf("  V0: %u runs in %.6f seconds (%.6f seconds per run)\n",
-               scenario->repetitions, v0_time, v0_time / scenario->repetitions);
-        printf("  V1: %u runs in %.6f seconds (%.6f seconds per run)\n",
-               scenario->repetitions, v1_time, v1_time / scenario->repetitions);
-        printf("  Correctness: %s (V0 %s V1)\n\n",
-               passed ? "PASS" : "FAIL", passed ? "equals" : "differs from");
+        for (int version = 0; version < IMPLEMENTATION_COUNT; ++version) {
+            printf("  V%d: %u runs in %.6f seconds (%.6f seconds per run)\n",
+                   version, scenario->repetitions, elapsed_times[version],
+                   elapsed_times[version] / scenario->repetitions);
 
-        free(v0_image);
-        free(v1_image);
+            if (version == REFERENCE_VERSION) {
+                printf("  Correctness V%d: PASS (reference)\n", version);
+            } else {
+                printf("  Correctness V%d: %s (V%d %s V%d)\n",
+                       version, passed[version] ? "PASS" : "FAIL", version,
+                       passed[version] ? "equals" : "differs from", REFERENCE_VERSION);
+            }
+        }
+        printf("\n");
+
+        free(reference_image);
+        free(version_image);
     }
 
     printf("Suite result: %s\n", all_passed ? "PASS" : "FAIL");
@@ -155,8 +192,8 @@ int main(int argc, char * argv[]) {
         return EXIT_SUCCESS;
     }
 
-    if (version != 0 && version != 1) {
-        fprintf(stderr, "Only implementation versions 0 and 1 are available\n");
+    if (version < 0 || version >= IMPLEMENTATION_COUNT) {
+        fprintf(stderr, "Only implementation versions 0 to 3 are available\n");
         return EXIT_FAILURE;
     }
 
@@ -240,10 +277,21 @@ int main(int argc, char * argv[]) {
     }
 
     for (int i = 0; i < runs; ++i) {
-        if (version == 0) {
-            julia(c, start, image_width, height, res, n, color, img);
-        } else {
-            julia_V1(c, start, image_width, height, res, n, color, img);
+        switch (version) {
+            case 0:
+                julia(c, start, image_width, height, res, n, color, img);
+                break;
+            case 1:
+                julia_V1(c, start, image_width, height, res, n, color, img);
+                break;
+            case 2:
+                julia_V2(c, start, image_width, height, res, n, color, img);
+                break;
+            case 3:
+                julia_V3(c, start, image_width, height, res, n, color, img);
+                break;
+            default:
+                break;
         }
     }
     
