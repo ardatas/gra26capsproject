@@ -36,8 +36,7 @@ static void write_pixel(unsigned char* row, size_t x, unsigned i, unsigned n, bo
 static unsigned julia_iterations(float z_real, float z_imag, float c_real, float c_imag, unsigned n) {
     unsigned i = 0;
 
-    // TODO check if < 4.0f is more accurate than <= to 4.0f
-    // Use <= 4.0f because escape is guaranteed only once |z|^2 > 4
+    // A point escapes only when |z|^2 exceeds 4. (Use <= 4.0f)    
     // Points exactly on the radius-2 boundary are not outside the escape circle (source: https://www.mrob.com/pub/muency/escaperadius.html)
     while (i < n && z_real * z_real + z_imag * z_imag <= 4.0f) {
         const float next_real = z_real * z_real - z_imag * z_imag + c_real;
