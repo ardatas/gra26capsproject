@@ -1,6 +1,6 @@
 # P0: V0 SIMD active mask
 
-This is a correctness bug fix in the optimized SIMD implementation, not a performance optimization. It ensures that V0 produces the same iteration counts as the scalar V1 implementation.
+This is a correctness bug fix in the optimized SIMD implementation, not a performance optimization. It ensures that V0 produces the same iteration counts as the scalar reference (now V3).
 
 ## Old code
 
@@ -31,7 +31,7 @@ for (unsigned iteration = 0; iteration < n; ++iteration) {
 
 `active` is recalculated from scratch in every iteration. If one lane has escaped but another lane is still active, all lanes are updated. The escaped lane can later be inside the threshold again and receive further iteration counts.
 
-V1 stops a pixel permanently once it has escaped. Therefore V0 and V1 can produce different BMP pixels.
+The scalar reference (now V3) stops a pixel permanently once it has escaped. Therefore V0 and V3 can produce different BMP pixels.
 
 ## Fixed code
 
@@ -64,10 +64,10 @@ for (unsigned iteration = 0; iteration < n; ++iteration) {
 
 ## Check
 
-Compare V0 and V1 with the same input, including:
+Compare V0 and V3 with the same input, including:
 
 ```text
 -d 4,-1 -n 10 -r 3 -s -6,0 -c -9,0
 ```
 
-The generated BMP files must be identical before benchmarking V0 against V1.
+The generated BMP files must be identical before benchmarking V0 against V3.

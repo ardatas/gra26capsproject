@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Times V0 (SIMD) against V1 (scalar) on the Rechnerhalle.
+# Times all four implementation versions on the Rechnerhalle.
 
 set -euo pipefail
 
@@ -10,6 +10,9 @@ IMPL_DIR="$REPO_DIR/Implementierung"
 
 # How many times each scenario is timed
 TRIALS=5
+VERSIONS=(0 1 2 3)
+CANDIDATE_VERSIONS=(0 1 2)
+REFERENCE_VERSION=3
 
 SCENARIOS=(
     "default_gray|800,-600|0.005|100|-2,1.5|-0.5125,0.5213|gray|200"
@@ -58,7 +61,7 @@ make 2>&1 | tee "$RUN_DIR/build.log"
 # Hash the binary we are about to measure.
 sha256sum project > "$RUN_DIR/project.sha256"
 
-# Before timing anything, make sure V0 and V1 produce the same image.
+# Before timing anything, make sure V0, V1 and V2 match the scalar V3 reference.
 echo "=== Correctness gate ===" | tee "$RESULTS_LOG"
 for scenario in "${SCENARIOS[@]}" "${GATE_SCENARIOS[@]}"; do
     IFS='|' read -r NAME DIMS RES ITERS START C COLOR REPS <<< "$scenario"
@@ -69,25 +72,27 @@ for scenario in "${SCENARIOS[@]}" "${GATE_SCENARIOS[@]}"; do
         COLOR_FLAG="-C"
     fi
 
-    V0_BMP="$CORRECTNESS_DIR/$NAME-V0.bmp"
-    V1_BMP="$CORRECTNESS_DIR/$NAME-V1.bmp"
+    REFERENCE_BMP="$CORRECTNESS_DIR/$NAME-V$REFERENCE_VERSION.bmp"
+    ./project -V "$REFERENCE_VERSION" -d "$DIMS" -r "$RES" -n "$ITERS" -s "$START" -c "$C" $COLOR_FLAG -o "$REFERENCE_BMP"
 
-    ./project -V 0 -d "$DIMS" -r "$RES" -n "$ITERS" -s "$START" -c "$C" $COLOR_FLAG -o "$V0_BMP"
-    ./project -V 1 -d "$DIMS" -r "$RES" -n "$ITERS" -s "$START" -c "$C" $COLOR_FLAG -o "$V1_BMP"
+    for version in "${CANDIDATE_VERSIONS[@]}"; do
+        VERSION_BMP="$CORRECTNESS_DIR/$NAME-V$version.bmp"
+        ./project -V "$version" -d "$DIMS" -r "$RES" -n "$ITERS" -s "$START" -c "$C" $COLOR_FLAG -o "$VERSION_BMP"
 
-    if cmp -s "$V0_BMP" "$V1_BMP"; then
-        echo "PASS: $NAME (V0 equals V1)" | tee -a "$RESULTS_LOG"
-    else
-        echo "FAIL: $NAME (V0 differs from V1) - benchmark aborted" | tee -a "$RESULTS_LOG"
-        exit 1
-    fi
+        if cmp -s "$VERSION_BMP" "$REFERENCE_BMP"; then
+            echo "PASS: $NAME (V$version equals V$REFERENCE_VERSION)" | tee -a "$RESULTS_LOG"
+        else
+            echo "FAIL: $NAME (V$version differs from V$REFERENCE_VERSION) - benchmark aborted" | tee -a "$RESULTS_LOG"
+            exit 1
+        fi
+    done
 done
 (
     cd "$CORRECTNESS_DIR"
     sha256sum ./*.bmp > SHA256SUMS.txt
 )
 
-# Timing: 5 trials per scenario, alternating which version goes first.
+# Timing: rotate the order each trial so no version always runs first.
 echo "=== Timings ===" | tee -a "$RESULTS_LOG"
 for scenario in "${SCENARIOS[@]}"; do
     IFS='|' read -r NAME DIMS RES ITERS START C COLOR REPS <<< "$scenario"
@@ -101,14 +106,14 @@ for scenario in "${SCENARIOS[@]}"; do
         | tee -a "$RESULTS_LOG"
 
     for trial in $(seq 1 "$TRIALS"); do
-        # Swap the order each trial so drift hits both versions equally.
-        if [ $((trial % 2)) -eq 1 ]; then
-            ORDER="0 1"
-        else
-            ORDER="1 0"
-        fi
+        ORDER=()
+        rotation=$(( (trial - 1) % ${#VERSIONS[@]} ))
+        for ((offset = 0; offset < ${#VERSIONS[@]}; ++offset)); do
+            index=$(( (rotation + offset) % ${#VERSIONS[@]} ))
+            ORDER+=("${VERSIONS[$index]}")
+        done
 
-        for version in $ORDER; do
+        for version in "${ORDER[@]}"; do
             printf 'scenario=%s trial=%s version=%s ' "$NAME" "$trial" "$version" | tee -a "$RESULTS_LOG"
             ./project -V "$version" -B "$REPS" -d "$DIMS" -r "$RES" -n "$ITERS" -s "$START" -c "$C" $COLOR_FLAG -o /dev/null \
                 | tee -a "$RESULTS_LOG"
