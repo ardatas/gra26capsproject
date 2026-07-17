@@ -23,26 +23,32 @@ typedef struct {
     float complex start;
     float complex c;
     bool color;
-    unsigned repetitions;
-} BenchmarkScenario;
+} TestScenario;
 
-static const BenchmarkScenario benchmark_scenarios[] = {
+static const TestScenario test_scenarios[] = {
     {"default_gray", "Baseline grayscale image", 800, -600, 0.005f, 100,
-     -2.0f + 1.5f * I, -0.5125f + 0.5213f * I, false, 200},
+     -2.0f + 1.5f * I, -0.5125f + 0.5213f * I, false},
     {"default_color", "Color path with three bytes per pixel", 800, -600, 0.005f, 100,
-     -2.0f + 1.5f * I, -0.5125f + 0.5213f * I, true, 200},
-    {"simd_tail", "Width not divisible by four, so the scalar tail is used", 801, -600, 0.005f, 100,
-     -2.0f + 1.5f * I, -0.5125f + 0.5213f * I, false, 200},
+     -2.0f + 1.5f * I, -0.5125f + 0.5213f * I, true},
     {"high_iteration", "Higher iteration bound", 800, -600, 0.005f, 1000,
-     -2.0f + 1.5f * I, -0.5125f + 0.5213f * I, false, 100},
+     -2.0f + 1.5f * I, -0.5125f + 0.5213f * I, false},
+    {"simd_tail", "Width not divisible by four, so the scalar tail is used", 801, -600, 0.005f, 100,
+     -2.0f + 1.5f * I, -0.5125f + 0.5213f * I, false},
+    {"escaped_lane", "Divergent SIMD lanes with early escapes", 800, -600, 0.005f, 100,
+     -2.0f + 1.5f * I, 1.0f + 1.0f * I, false},
+    {"bottom_up", "Positive height and bottom-up BMP rows", 800, 600, 0.005f, 100,
+     -2.0f - 1.5f * I, -0.5125f + 0.5213f * I, false},
+    {"n_zero", "Zero iterations produce a black image", 800, -600, 0.005f, 0,
+     -2.0f + 1.5f * I, -0.5125f + 0.5213f * I, false},
 };
 
 enum {
     IMPLEMENTATION_COUNT = 4,
     REFERENCE_VERSION = 3,
+    TEST_CHECK_INTERVAL = 8,
 };
 
-static void run_version(int version, const BenchmarkScenario* scenario, unsigned char* img) {
+static void run_version(int version, const TestScenario* scenario, unsigned char* img) {
     switch (version) {
         case 0:
             julia(scenario->c, scenario->start, (size_t) scenario->width, scenario->height,
@@ -65,38 +71,18 @@ static void run_version(int version, const BenchmarkScenario* scenario, unsigned
     }
 }
 
-static int measure_version(int version, const BenchmarkScenario* scenario, unsigned char* img,
-                           double* elapsed_time) {
-    struct timespec start_time;
-    struct timespec end_time;
-
-    if (clock_gettime(CLOCK_MONOTONIC, &start_time) == -1) {
-        perror("clock_gettime");
-        return EXIT_FAILURE;
-    }
-
-    for (unsigned i = 0; i < scenario->repetitions; ++i) {
-        run_version(version, scenario, img);
-    }
-
-    if (clock_gettime(CLOCK_MONOTONIC, &end_time) == -1) {
-        perror("clock_gettime");
-        return EXIT_FAILURE;
-    }
-
-    *elapsed_time = (double) (end_time.tv_sec - start_time.tv_sec) +
-                    (double) (end_time.tv_nsec - start_time.tv_nsec) / 1e9;
-    return EXIT_SUCCESS;
-}
-
 static int run_test_suite(void) {
-    const size_t scenario_count = sizeof(benchmark_scenarios) / sizeof(benchmark_scenarios[0]);
+    const size_t scenario_count = sizeof(test_scenarios) / sizeof(test_scenarios[0]);
+    const size_t comparisons_per_scenario = REFERENCE_VERSION;
+    size_t passed_scenarios = 0;
+    size_t passed_comparisons = 0;
     bool all_passed = true;
 
-    printf("Benchmark Test Suite\n\n");
+    julia_set_check_interval(TEST_CHECK_INTERVAL);
+    printf("Predefined Test Suite\n\n");
 
     for (size_t i = 0; i < scenario_count; ++i) {
-        const BenchmarkScenario* scenario = &benchmark_scenarios[i];
+        const TestScenario* scenario = &test_scenarios[i];
         const size_t width = (size_t) scenario->width;
         const size_t height = abs_height(scenario->height);
         const size_t bytes_per_pixel = scenario->color ? 3 : 1;
@@ -115,56 +101,41 @@ static int run_test_suite(void) {
 
         printf("[%zu/%zu] %s\n", i + 1, scenario_count, scenario->name);
         printf("Description: %s\n", scenario->description);
-        printf("Parameters: -d %zd,%zd -r %g -n %u -s %g,%g -c %g,%g color=%s -B %u\n",
+        printf("Parameters: -d %zd,%zd -r %g -n %u -s %g,%g -c %g,%g%s\n",
                scenario->width, scenario->height, (double) scenario->res, scenario->n,
                (double) crealf(scenario->start), (double) cimagf(scenario->start),
                (double) crealf(scenario->c), (double) cimagf(scenario->c),
-               scenario->color ? "color" : "gray", scenario->repetitions);
+               scenario->color ? " -C" : "");
+        printf("V0 check interval: -i %d\n", TEST_CHECK_INTERVAL);
 
-        double elapsed_times[IMPLEMENTATION_COUNT];
-        bool passed[IMPLEMENTATION_COUNT] = {false};
+        run_version(REFERENCE_VERSION, scenario, reference_image);
 
-        if (measure_version(REFERENCE_VERSION, scenario, reference_image,
-                            &elapsed_times[REFERENCE_VERSION]) != EXIT_SUCCESS) {
-            free(reference_image);
-            free(version_image);
-            return EXIT_FAILURE;
-        }
-        passed[REFERENCE_VERSION] = true;
-
+        bool scenario_passed = true;
         for (int version = 0; version < REFERENCE_VERSION; ++version) {
-            if (measure_version(version, scenario, version_image,
-                                &elapsed_times[version]) != EXIT_SUCCESS) {
-                free(reference_image);
-                free(version_image);
-                return EXIT_FAILURE;
+            run_version(version, scenario, version_image);
+            const bool passed = memcmp(version_image, reference_image, image_size) == 0;
+            scenario_passed = scenario_passed && passed;
+            if (passed) {
+                ++passed_comparisons;
             }
-
-            passed[version] = memcmp(version_image, reference_image, image_size) == 0;
-            all_passed = all_passed && passed[version];
+            printf("  V%d%s: %s (%s V%d)\n", version,
+                   version == 0 ? "/K=8" : "", passed ? "PASS" : "FAIL",
+                   passed ? "matches" : "differs from", REFERENCE_VERSION);
         }
 
-        printf("Results:\n");
-        for (int version = 0; version < IMPLEMENTATION_COUNT; ++version) {
-            printf("  V%d: %u runs in %.6f seconds (%.6f seconds per run)\n",
-                   version, scenario->repetitions, elapsed_times[version],
-                   elapsed_times[version] / scenario->repetitions);
-
-            if (version == REFERENCE_VERSION) {
-                printf("  Correctness V%d: PASS (reference)\n", version);
-            } else {
-                printf("  Correctness V%d: %s (V%d %s V%d)\n",
-                       version, passed[version] ? "PASS" : "FAIL", version,
-                       passed[version] ? "equals" : "differs from", REFERENCE_VERSION);
-            }
+        if (scenario_passed) {
+            ++passed_scenarios;
         }
-        printf("\n");
+        all_passed = all_passed && scenario_passed;
+        printf("Result: %s\n\n", scenario_passed ? "PASS" : "FAIL");
 
         free(reference_image);
         free(version_image);
     }
 
-    printf("Suite result: %s\n", all_passed ? "PASS" : "FAIL");
+    printf("Summary: %zu/%zu scenarios passed, %zu/%zu comparisons passed.\n",
+           passed_scenarios, scenario_count, passed_comparisons,
+           scenario_count * comparisons_per_scenario);
     return all_passed ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 
@@ -195,6 +166,10 @@ int main(int argc, char * argv[]) {
         return EXIT_SUCCESS;
     }
 
+    if (run_test) {
+        return run_test_suite();
+    }
+
     if (version < 0 || version >= IMPLEMENTATION_COUNT) {
         fprintf(stderr, "Only implementation versions 0 to 3 are available\n");
         return EXIT_FAILURE;
@@ -210,10 +185,6 @@ int main(int argc, char * argv[]) {
     if (benchmark_runs < 0) {
         fprintf(stderr, "Benchmark repetitions must not be negative\n");
         return EXIT_FAILURE;
-    }
-
-    if (run_test) {
-        return run_test_suite();
     }
 
     if (height == 0) {
