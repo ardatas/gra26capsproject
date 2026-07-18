@@ -24,9 +24,9 @@ static void write_pixel(unsigned char* row, size_t x, unsigned i, unsigned n, bo
         unsigned char blue = 0;
 
         if (i != n && n != 0) {
-            red = 255 - 4 * ((i +  0) % 64);
-            green = 255 - 4 * ((i + 21) % 64);
-            blue = 255 - 4 * ((i + 42) % 64);
+            red = 255 - 4 * ((i +  44) % 64);
+            green = 255 - 4 * ((i + 44) % 64);
+            blue = 255 - 4 * ((i + 26) % 64);
         }
 
         row[4 * x] = blue;
@@ -64,9 +64,9 @@ static void write_pixel4(unsigned char* row, size_t x, __m128i counts, unsigned 
 
         _mm_storeu_si32(row + x, values8);
     } else {
-        const __m128i red = calculate_channel4(counts, 0, julia_set_part);
-        const __m128i green = calculate_channel4(counts, 21, julia_set_part);
-        const __m128i blue = calculate_channel4(counts, 42, julia_set_part);
+        const __m128i red = calculate_channel4(counts, 44, julia_set_part);
+        const __m128i green = calculate_channel4(counts, 44, julia_set_part);
+        const __m128i blue = calculate_channel4(counts, 26, julia_set_part);
 
         __m128i bgr0 = blue;
         // shift color to the correct part of the __m128i (little endian!)
