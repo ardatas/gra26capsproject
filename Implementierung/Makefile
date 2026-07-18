@@ -5,13 +5,13 @@ CFLAGS = -std=c17 -O3 -g -msse4.2 -Wall -Wextra -pedantic
 LDLIBS = -lm
 
 TARGET = project
-SOURCES = main.c julia.c utils.c 
+SOURCES = main.c julia.c utils.c benchmark.c
 
 .PHONY: all clean
 
 all: $(TARGET)
 
-$(TARGET): $(SOURCES) julia.h utils.h
+$(TARGET): $(SOURCES) main.h julia.h utils.h benchmark.h
 	$(CC) $(CFLAGS) -o $(TARGET) $(SOURCES) $(LDLIBS)
 
 clean:

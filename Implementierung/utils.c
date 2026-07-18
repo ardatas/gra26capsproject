@@ -33,12 +33,12 @@ size_t abs_height(ssize_t height) {
     return height < 0 ? (size_t) -height : (size_t) height;
 }
 
-void print_usage(FILE* stream) {
+void print_usage(FILE *stream) {
     fprintf(stream, "Usage: ./project [options]\n");
     fprintf(stream, "Try './project --help' for a description of all options.\n");
 }
 
-int input_error(const char* message) {
+int input_error(const char *message) {
     fprintf(stderr, "%s\n", message);
     print_usage(stderr);
     return EXIT_FAILURE;
@@ -50,7 +50,8 @@ static void print_help(void) {
     printf("      0                       SIMD with count-subtraction optimization + SIMD pixel writing\n");
     printf("      1                       scalar reference\n");
     printf("      2                       SIMD with count-subtraction optimization\n"); // TODO remove 2 through 4
-    printf("      3                       SIMD with count-subtraction optimization + mm_movemask only on every kth-iteration\n");
+    printf(
+        "      3                       SIMD with count-subtraction optimization + mm_movemask only on every kth-iteration\n");
     printf("      4                       baseline SIMD\n");
     printf("  -B <number>                 runtime measurement iterations (default is 0)\n");
     printf("  -s <real>,<imag>            start point\n");
@@ -67,17 +68,17 @@ static void print_help(void) {
     printf("  Example: ./project -V 1 -i 8 -B 100 -o output.bmp\n");
 }
 
-static bool is_allowed_output_filename(const char* filename) {
+static bool is_allowed_output_filename(const char *filename) {
     return filename != NULL && filename[0] != '\0';
 }
 
-static int argument_error(const char* message) {
+static int argument_error(const char *message) {
     fprintf(stderr, "%s\n", message);
     print_usage(stderr);
     return EXIT_FAILURE;
 }
 
-static bool parse_long_until(const char* text, char** end, long* value) {
+static bool parse_long_until(const char *text, char **end, long *value) {
     errno = 0;
     const long parsed = strtol(text, end, 10);
 
@@ -89,7 +90,7 @@ static bool parse_long_until(const char* text, char** end, long* value) {
     return true;
 }
 
-static bool parse_float_until(const char* text, char** end, float* value) {
+static bool parse_float_until(const char *text, char **end, float *value) {
     errno = 0;
     const float parsed = strtof(text, end);
 
@@ -101,8 +102,8 @@ static bool parse_float_until(const char* text, char** end, float* value) {
     return true;
 }
 
-static bool parse_int_arg(const char* text, int* value) {
-    char* end = NULL;
+static bool parse_int_arg(const char *text, int *value) {
+    char *end = NULL;
     long parsed;
 
     if (!parse_long_until(text, &end, &parsed) || *end != '\0' ||
@@ -114,8 +115,8 @@ static bool parse_int_arg(const char* text, int* value) {
     return true;
 }
 
-static bool parse_unsigned_arg(const char* text, unsigned* value) {
-    char* end = NULL;
+static bool parse_unsigned_arg(const char *text, unsigned *value) {
+    char *end = NULL;
     long parsed;
 
     if (!parse_long_until(text, &end, &parsed) || *end != '\0' ||
@@ -127,8 +128,8 @@ static bool parse_unsigned_arg(const char* text, unsigned* value) {
     return true;
 }
 
-static bool parse_float_arg(const char* text, float* value) {
-    char* end = NULL;
+static bool parse_float_arg(const char *text, float *value) {
+    char *end = NULL;
 
     if (!parse_float_until(text, &end, value) || *end != '\0') {
         return false;
@@ -137,8 +138,8 @@ static bool parse_float_arg(const char* text, float* value) {
     return true;
 }
 
-static bool parse_finite_float_pair_arg(const char* text, float* first, float* second) {
-    char* end = NULL;
+static bool parse_finite_float_pair_arg(const char *text, float *first, float *second) {
+    char *end = NULL;
     float parsed_first;
     float parsed_second;
 
@@ -146,7 +147,7 @@ static bool parse_finite_float_pair_arg(const char* text, float* first, float* s
         return false;
     }
 
-    const char* second_text = end + 1;
+    const char *second_text = end + 1;
     if (!parse_float_until(second_text, &end, &parsed_second) || *end != '\0' ||
         !isfinite(parsed_first) || !isfinite(parsed_second)) {
         return false;
@@ -157,8 +158,8 @@ static bool parse_finite_float_pair_arg(const char* text, float* first, float* s
     return true;
 }
 
-static bool parse_ssize_pair_arg(const char* text, ssize_t* first, ssize_t* second) {
-    char* end = NULL;
+static bool parse_ssize_pair_arg(const char *text, ssize_t *first, ssize_t *second) {
+    char *end = NULL;
     long parsed_first;
     long parsed_second;
 
@@ -166,7 +167,7 @@ static bool parse_ssize_pair_arg(const char* text, ssize_t* first, ssize_t* seco
         return false;
     }
 
-    const char* second_text = end + 1;
+    const char *second_text = end + 1;
     if (!parse_long_until(second_text, &end, &parsed_second) || *end != '\0') {
         return false;
     }
@@ -176,10 +177,10 @@ static bool parse_ssize_pair_arg(const char* text, ssize_t* first, ssize_t* seco
     return true;
 }
 
-int parse_args(int argc, char* argv[], int* version, int* benchmark_runs, float complex* c,
-               float complex* start, ssize_t* width, ssize_t* height, float* res,
-               unsigned* n, unsigned* check_interval, bool* check_interval_given,
-               bool* color, const char** output_filename, bool* run_test, bool* should_exit) {
+int parse_args(int argc, char *argv[], int *version, int *benchmark_runs, float complex *c,
+               float complex *start, ssize_t *width, ssize_t *height, float *res,
+               unsigned *n, unsigned *check_interval, bool *check_interval_given,
+               bool *color, const char **output_filename, bool *run_test, bool *should_exit) {
     static struct option long_options[] = {
         {"color", no_argument, NULL, 'C'},
         {"check-interval", required_argument, NULL, 'i'},
@@ -283,7 +284,7 @@ int parse_args(int argc, char* argv[], int* version, int* benchmark_runs, float 
     return EXIT_SUCCESS;
 }
 
-int write_bmp(const char* filename, ssize_t width, ssize_t height, bool color, const unsigned char* img) {
+int write_bmp(const char *filename, ssize_t width, ssize_t height, bool color, const unsigned char *img) {
     const size_t image_width = (size_t) width;
     const size_t image_height = abs_height(height);
     const uint16_t bits_per_pixel = color ? 32 : 8;
@@ -302,9 +303,9 @@ int write_bmp(const char* filename, ssize_t width, ssize_t height, bool color, c
         return EXIT_FAILURE;
     }
 
-    FILE* file = fopen(filename, "wb");
+    FILE *file = fopen(filename, "wb");
     if (file == NULL) {
-        perror(filename);
+        fprintf(stderr, "Could not open file for writing: %s\n", filename);
         return EXIT_FAILURE;
     }
 
@@ -332,7 +333,7 @@ int write_bmp(const char* filename, ssize_t width, ssize_t height, bool color, c
 
     if (fwrite(&file_header, sizeof(file_header), 1, file) != 1 ||
         fwrite(&info_header, sizeof(info_header), 1, file) != 1) {
-        perror(filename);
+        fprintf(stderr, "Could not write to file: %s\n", filename);
         fclose(file);
         return EXIT_FAILURE;
     }
@@ -345,7 +346,7 @@ int write_bmp(const char* filename, ssize_t width, ssize_t height, bool color, c
                 fputc((int) i, file) == EOF ||
                 fputc((int) i, file) == EOF ||
                 fputc(0, file) == EOF) {
-                perror(filename);
+                fprintf(stderr, "Could not write to file: %s\n", filename);
                 fclose(file);
                 return EXIT_FAILURE;
             }
@@ -353,13 +354,13 @@ int write_bmp(const char* filename, ssize_t width, ssize_t height, bool color, c
     }
 
     if (fwrite(img, 1, pixel_data_size, file) != pixel_data_size) {
-        perror(filename);
+        fprintf(stderr, "Could not write to file: %s\n", filename);
         fclose(file);
         return EXIT_FAILURE;
     }
 
     if (fclose(file) != 0) {
-        perror(filename);
+        fprintf(stderr, "Could not close file: %s\n", filename);
         return EXIT_FAILURE;
     }
 
