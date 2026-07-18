@@ -8,37 +8,6 @@
 #include <string.h>
 #include <time.h>
 
-typedef struct {
-    const char* name;
-    const char* description;
-    ssize_t width;
-    ssize_t height;
-    float res;
-    unsigned n;
-    float complex start;
-    float complex c;
-    bool color;
-} TestScenario;
-
-static const TestScenario test_scenarios[] = {
-    {"default_gray", "Baseline grayscale image", 800, -600, 0.005f, 100,
-     -2.0f + 1.5f * I, -0.5125f + 0.5213f * I, false},
-    {"default_color", "Color path with three bytes per pixel", 800, -600, 0.005f, 100,
-     -2.0f + 1.5f * I, -0.5125f + 0.5213f * I, true},
-    {"high_iteration", "Higher iteration bound", 800, -600, 0.005f, 1000,
-     -2.0f + 1.5f * I, -0.5125f + 0.5213f * I, false},
-    {"c_dendrite", "Dendrite Julia constant with different escape behavior", 800, -600, 0.005f, 100,
-     -2.0f + 1.5f * I, 0.0f + 1.0f * I, false},
-    {"simd_tail", "Width not divisible by four, so the scalar tail is used", 801, -600, 0.005f, 100,
-     -2.0f + 1.5f * I, -0.5125f + 0.5213f * I, false},
-    {"escaped_lane", "Divergent SIMD lanes with early escapes", 800, -600, 0.005f, 100,
-     -2.0f + 1.5f * I, 1.0f + 1.0f * I, false},
-    {"bottom_up", "Positive height and bottom-up BMP rows", 800, 600, 0.005f, 100,
-     -2.0f - 1.5f * I, -0.5125f + 0.5213f * I, false},
-    {"n_zero", "Zero iterations produce a black image", 800, -600, 0.005f, 0,
-     -2.0f + 1.5f * I, -0.5125f + 0.5213f * I, false},
-};
-
 enum {
     IMPLEMENTATION_COUNT = 5,
 };
