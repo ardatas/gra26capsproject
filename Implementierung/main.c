@@ -168,55 +168,45 @@ int main(int argc, char * argv[]) {
     }
 
     if (version < 0 || version >= IMPLEMENTATION_COUNT) {
-        fprintf(stderr, "Only implementation versions 0 to 3 are available\n");
-        return EXIT_FAILURE;
+        return input_error("Only implementation versions 0 to 3 are available");
     }
 
     if (check_interval_given && version != 1) {
-        fprintf(stderr, "Only implementation version 1 supports the check interval\n");
-        return EXIT_FAILURE;
+        return input_error("Only implementation version 1 supports the check interval");
     }
 
     julia_set_check_interval(check_interval);
 
     if (benchmark_runs < 0) {
-        fprintf(stderr, "Benchmark repetitions must not be negative\n");
-        return EXIT_FAILURE;
+        return input_error("Benchmark repetitions must not be negative");
     }
 
     if (height == 0) {
-        fprintf(stderr, "Height must not be zero, as it would result in an image with no area\n");
-        return EXIT_FAILURE;
+        return input_error("Height must not be zero, as it would result in an image with no area");
     }
 
     if (width <= 0) {
-        fprintf(stderr, "Width must be positive, as the image needs at least one column\n");
-        return EXIT_FAILURE;
+        return input_error("Width must be positive, as the image needs at least one column");
     }
 
     if (res == 0) {
-        fprintf(stderr, "Resolution must not be zero, as it would map every pixel to the same point\n");
-        return EXIT_FAILURE;
+        return input_error("Resolution must not be zero, as it would map every pixel to the same point");
     }
 
     if (!isfinite(res)) {
-        fprintf(stderr, "Resolution must be a finite number\n");
-        return EXIT_FAILURE;
+        return input_error("Resolution must be a finite number");
     }
 
     if (width > INT32_MAX) {
-        fprintf(stderr, "Width must not be greater than %d for BMP output\n", INT32_MAX);
-        return EXIT_FAILURE;
+        return input_error("Width must not be greater than 2147483647 for BMP output");
     }
 
     if (height < -(ssize_t) INT32_MAX) {
-        fprintf(stderr, "Height must not be smaller than %d for BMP output\n", -INT32_MAX);
-        return EXIT_FAILURE;
+        return input_error("Height must not be smaller than -2147483647 for BMP output");
     }
 
     if (height > INT32_MAX) {
-        fprintf(stderr, "Height must not be greater than %d for BMP output\n", INT32_MAX);
-        return EXIT_FAILURE;
+        return input_error("Height must not be greater than 2147483647 for BMP output");
     }
 
 
@@ -231,8 +221,7 @@ int main(int argc, char * argv[]) {
     const size_t pixel_data_size = row_length * image_height;
 
     if (pixel_data_size > UINT32_MAX - pixel_offset) {
-        fprintf(stderr, "Image dimensions are too large for BMP output\n");
-        return EXIT_FAILURE;
+        return input_error("Image dimensions are too large for BMP output");
     }
 
     unsigned char* img = malloc(pixel_data_size);
@@ -271,7 +260,7 @@ int main(int argc, char * argv[]) {
                 break;
         }
     }
-    
+
 
     if (benchmark_runs > 0 && clock_gettime(CLOCK_MONOTONIC, &end_time) == -1) {
         perror("clock_gettime");
@@ -280,10 +269,10 @@ int main(int argc, char * argv[]) {
     }
 
     if (benchmark_runs > 0) {
-        double elapsed_time = 
-            (double) (end_time.tv_sec - start_time.tv_sec) + 
+        double elapsed_time =
+            (double) (end_time.tv_sec - start_time.tv_sec) +
             (double) (end_time.tv_nsec - start_time.tv_nsec) / 1e9;
-        
+
         printf("Benchmark: %d runs in %.6f seconds (%.6f seconds per run)\n",
                runs, elapsed_time, elapsed_time / runs);
     }

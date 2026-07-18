@@ -1,10 +1,9 @@
 #include "utils.h"
 #include <getopt.h>
-#include <regex.h>
+#include <math.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <errno.h>
 #include <limits.h>
 
@@ -34,6 +33,17 @@ size_t abs_height(ssize_t height) {
     return height < 0 ? (size_t) -height : (size_t) height;
 }
 
+void print_usage(FILE* stream) {
+    fprintf(stream, "Usage: ./project [options]\n");
+    fprintf(stream, "Try './project --help' for a description of all options.\n");
+}
+
+int input_error(const char* message) {
+    fprintf(stderr, "%s\n", message);
+    print_usage(stderr);
+    return EXIT_FAILURE;
+}
+
 static void print_help(void) {
     printf("Help Message\n");
     printf("  -V <0..3>                   implementation version (default is 0)\n");
@@ -41,35 +51,29 @@ static void print_help(void) {
     printf("      1                       SIMD with count-subtraction optimization + mm_movemask only on every kth-iteration\n");
     printf("      2                       baseline SIMD\n");
     printf("      3                       scalar reference\n");
-    printf("  -B <number>                 benchmark repetitions (default is 0)\n");
+    printf("  -B <number>                 runtime measurement iterations (default is 0)\n");
     printf("  -s <real>,<imag>            start point\n");
     printf("  -d <width>,<height>         image dimensions in pixels\n");
     printf("  -n <number>                 maximum iterations per pixel\n");
     printf("  -i, --check-interval <K>   check fully escaped SIMD blocks every K iterations\n");
     printf("                              default is 1; supported by V1 only\n");
-    printf("  -r <number>                 resolution per pixel\n");
+    printf("  -r <number>                 step per pixel\n");
     printf("  -c <real>,<imag>            julia constant c\n");
-    printf("  -o <filename>               output BMP file\n");
+    printf("  -o <filename>               output BMP filename\n");
     printf("  -C, --color                 enable color output (default is grayscale)\n");
-    printf("  -t, --test                  run all predefined correctness scenarios and exit\n");
-    printf("  -h, --help                  show this help\n");
+    printf("  -t, --test                  run all predefined benchmarking scenarios and exit\n");
+    printf("  -h, --help                  show this help message\n");
     printf("  Example: ./project -V 1 -i 8 -B 100 -o output.bmp\n");
 }
 
 static bool is_allowed_output_filename(const char* filename) {
-    if (filename == NULL || filename[0] == '\0') {
-        return false;
-    }
+    return filename != NULL && filename[0] != '\0';
+}
 
-    regex_t regex;
-    if (regcomp(&regex, "^[A-Za-z0-9._/-]+$", REG_EXTENDED) != 0) {
-        return false;
-    }
-
-    const bool matches = regexec(&regex, filename, 0, NULL, 0) == 0;
-    regfree(&regex);
-
-    return matches && strstr(filename, "..") == NULL;
+static int argument_error(const char* message) {
+    fprintf(stderr, "%s\n", message);
+    print_usage(stderr);
+    return EXIT_FAILURE;
 }
 
 static bool parse_long_until(const char* text, char** end, long* value) {
@@ -132,7 +136,7 @@ static bool parse_float_arg(const char* text, float* value) {
     return true;
 }
 
-static bool parse_float_pair_arg(const char* text, float* first, float* second) {
+static bool parse_finite_float_pair_arg(const char* text, float* first, float* second) {
     char* end = NULL;
     float parsed_first;
     float parsed_second;
@@ -142,7 +146,8 @@ static bool parse_float_pair_arg(const char* text, float* first, float* second) 
     }
 
     const char* second_text = end + 1;
-    if (!parse_float_until(second_text, &end, &parsed_second) || *end != '\0') {
+    if (!parse_float_until(second_text, &end, &parsed_second) || *end != '\0' ||
+        !isfinite(parsed_first) || !isfinite(parsed_second)) {
         return false;
     }
 
@@ -183,27 +188,25 @@ int parse_args(int argc, char* argv[], int* version, int* benchmark_runs, float 
     };
 
     optind = 1;
+    opterr = 0;
     int opt;
     while ((opt = getopt_long(argc, argv, "V:B:s:d:n:i:r:c:o:Cht", long_options, NULL)) != -1) {
         switch (opt) {
             case 'V':
                 if (!parse_int_arg(optarg, version)) {
-                    fprintf(stderr, "Invalid -V value. Expected integer\n");
-                    return EXIT_FAILURE;
+                    return argument_error("Invalid -V value. Expected integer");
                 }
                 break;
             case 'B':
                 if (!parse_int_arg(optarg, benchmark_runs)) {
-                    fprintf(stderr, "Invalid -B value. Expected integer\n");
-                    return EXIT_FAILURE;
+                    return argument_error("Invalid -B value. Expected integer");
                 }
                 break;
             case 's': {
                 float real;
                 float imag;
-                if (!parse_float_pair_arg(optarg, &real, &imag)) {
-                    fprintf(stderr, "Invalid -s format. Expected real,imag\n");
-                    return EXIT_FAILURE;
+                if (!parse_finite_float_pair_arg(optarg, &real, &imag)) {
+                    return argument_error("Invalid -s value. Expected finite real,imag");
                 }
                 *start = real + imag * I;
                 break;
@@ -212,8 +215,7 @@ int parse_args(int argc, char* argv[], int* version, int* benchmark_runs, float 
                 ssize_t parsed_width;
                 ssize_t parsed_height;
                 if (!parse_ssize_pair_arg(optarg, &parsed_width, &parsed_height)) {
-                    fprintf(stderr, "Invalid -d format. Expected width,height\n");
-                    return EXIT_FAILURE;
+                    return argument_error("Invalid -d format. Expected width,height");
                 }
                 *width = parsed_width;
                 *height = parsed_height;
@@ -221,37 +223,32 @@ int parse_args(int argc, char* argv[], int* version, int* benchmark_runs, float 
             }
             case 'n':
                 if (!parse_unsigned_arg(optarg, n)) {
-                    fprintf(stderr, "Invalid -n value. Expected non-negative integer\n");
-                    return EXIT_FAILURE;
+                    return argument_error("Invalid -n value. Expected non-negative integer");
                 }
                 break;
             case 'i':
                 if (!parse_unsigned_arg(optarg, check_interval) || *check_interval == 0) {
-                    fprintf(stderr, "Invalid -i value. Expected positive integer\n");
-                    return EXIT_FAILURE;
+                    return argument_error("Invalid -i value. Expected positive integer");
                 }
                 *check_interval_given = true;
                 break;
             case 'r':
                 if (!parse_float_arg(optarg, res)) {
-                    fprintf(stderr, "Invalid -r value. Expected floating-point number\n");
-                    return EXIT_FAILURE;
+                    return argument_error("Invalid -r value. Expected floating-point number");
                 }
                 break;
             case 'c': {
                 float real;
                 float imag;
-                if (!parse_float_pair_arg(optarg, &real, &imag)) {
-                    fprintf(stderr, "Invalid -c format. Expected real,imag\n");
-                    return EXIT_FAILURE;
+                if (!parse_finite_float_pair_arg(optarg, &real, &imag)) {
+                    return argument_error("Invalid -c value. Expected finite real,imag");
                 }
                 *c = real + imag * I;
                 break;
             }
             case 'o':
                 if (!is_allowed_output_filename(optarg)) {
-                    fprintf(stderr, "Invalid output filename. Allowed characters: A-Z a-z 0-9 . _ - /\n");
-                    return EXIT_FAILURE;
+                    return argument_error("Invalid output filename. The filename must not be empty");
                 }
                 *output_filename = optarg;
                 break;
@@ -266,9 +263,20 @@ int parse_args(int argc, char* argv[], int* version, int* benchmark_runs, float 
                 *should_exit = true;
                 break;
             default:
-                print_help();
+                if (optind > 0 && optind <= argc) {
+                    fprintf(stderr, "Invalid or incomplete option: %s\n", argv[optind - 1]);
+                } else {
+                    fprintf(stderr, "Invalid or incomplete command-line option\n");
+                }
+                print_usage(stderr);
                 return EXIT_FAILURE;
         }
+    }
+
+    if (optind < argc) {
+        fprintf(stderr, "Unexpected positional argument: %s\n", argv[optind]);
+        print_usage(stderr);
+        return EXIT_FAILURE;
     }
 
     return EXIT_SUCCESS;
@@ -328,14 +336,18 @@ int write_bmp(const char* filename, ssize_t width, ssize_t height, bool color, c
         return EXIT_FAILURE;
     }
 
-    // TODO note in the projektbericht the difference between defining a color palette and just using 24 bit for non color
+    // TODO note in the projektbericht the difference between defining a color palette and just using 24 bit for non colo
     if (!color) {
         // color palette with grayscale (0x000000 to 0xFFFFFF with equal r g and b values)
         for (uint32_t i = 0; i < 256; ++i) {
-            fputc((int) i, file);
-            fputc((int) i, file);
-            fputc((int) i, file);
-            fputc(0, file);
+            if (fputc((int) i, file) == EOF ||
+                fputc((int) i, file) == EOF ||
+                fputc((int) i, file) == EOF ||
+                fputc(0, file) == EOF) {
+                perror(filename);
+                fclose(file);
+                return EXIT_FAILURE;
+            }
         }
     }
 
