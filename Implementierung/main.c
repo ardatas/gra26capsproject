@@ -41,104 +41,8 @@ static const TestScenario test_scenarios[] = {
 
 enum {
     IMPLEMENTATION_COUNT = 5,
-    REFERENCE_VERSION = 1,
-    TEST_CHECK_INTERVAL = 8,
 };
 
-static void run_version(int version, const TestScenario* scenario, unsigned char* img) {
-    switch (version) {
-        case 0:
-            julia(scenario->c, scenario->start, (size_t) scenario->width, scenario->height,
-                  scenario->res, scenario->n, scenario->color, img);
-            break;
-        case 1:
-            julia_V1(scenario->c, scenario->start, (size_t) scenario->width, scenario->height,
-                     scenario->res, scenario->n, scenario->color, img);
-            break;
-        case 2:
-            julia_simd(scenario->c, scenario->start, (size_t) scenario->width, scenario->height,
-                     scenario->res, scenario->n, scenario->color, img);
-            break;
-        case 3:
-            julia_count_optimization(scenario->c, scenario->start, (size_t) scenario->width, scenario->height,
-                     scenario->res, scenario->n, scenario->color, img);
-            break;
-        case 4:
-            julia_k_iteration(scenario->c, scenario->start, (size_t) scenario->width, scenario->height,
-                     scenario->res, scenario->n, scenario->color, img);
-            break;
-        default:
-            break;
-    }
-}
-
-static int run_test_suite(void) {
-    const size_t scenario_count = sizeof(test_scenarios) / sizeof(test_scenarios[0]);
-    const size_t comparisons_per_scenario = REFERENCE_VERSION;
-    size_t passed_scenarios = 0;
-    size_t passed_comparisons = 0;
-    bool all_passed = true;
-
-    julia_set_check_interval(TEST_CHECK_INTERVAL);
-    printf("Predefined Test Suite\n\n");
-
-    for (size_t i = 0; i < scenario_count; ++i) {
-        const TestScenario* scenario = &test_scenarios[i];
-        const size_t width = (size_t) scenario->width;
-        const size_t height = abs_height(scenario->height);
-        const size_t bytes_per_pixel = scenario->color ? 4 : 1;
-        const size_t raw_row_length = width * bytes_per_pixel;
-        const size_t row_length = raw_row_length + (4 - raw_row_length % 4) % 4;
-        const size_t image_size = row_length * height;
-        unsigned char* reference_image = malloc(image_size);
-        unsigned char* version_image = malloc(image_size);
-
-        if (reference_image == NULL || version_image == NULL) {
-            fprintf(stderr, "Could not allocate image buffers for test scenario %s\n", scenario->name);
-            free(reference_image);
-            free(version_image);
-            return EXIT_FAILURE;
-        }
-
-        printf("[%zu/%zu] %s\n", i + 1, scenario_count, scenario->name);
-        printf("Description: %s\n", scenario->description);
-        printf("Parameters: -d %zd,%zd -r %g -n %u -s %g,%g -c %g,%g%s\n",
-               scenario->width, scenario->height, (double) scenario->res, scenario->n,
-               (double) crealf(scenario->start), (double) cimagf(scenario->start),
-               (double) crealf(scenario->c), (double) cimagf(scenario->c),
-               scenario->color ? " -C" : "");
-        printf("V1 check interval: -i %d\n", TEST_CHECK_INTERVAL);
-
-        run_version(REFERENCE_VERSION, scenario, reference_image);
-
-        bool scenario_passed = true;
-        for (int version = 0; version < REFERENCE_VERSION; ++version) {
-            run_version(version, scenario, version_image);
-            const bool passed = memcmp(version_image, reference_image, image_size) == 0;
-            scenario_passed = scenario_passed && passed;
-            if (passed) {
-                ++passed_comparisons;
-            }
-            printf("  V%d%s: %s (%s V%d)\n", version,
-                   version == 1 ? "/K=8" : "", passed ? "PASS" : "FAIL",
-                   passed ? "matches" : "differs from", REFERENCE_VERSION);
-        }
-
-        if (scenario_passed) {
-            ++passed_scenarios;
-        }
-        all_passed = all_passed && scenario_passed;
-        printf("Result: %s\n\n", scenario_passed ? "PASS" : "FAIL");
-
-        free(reference_image);
-        free(version_image);
-    }
-
-    printf("Summary: %zu/%zu scenarios passed, %zu/%zu comparisons passed.\n",
-           passed_scenarios, scenario_count, passed_comparisons,
-           scenario_count * comparisons_per_scenario);
-    return all_passed ? EXIT_SUCCESS : EXIT_FAILURE;
-}
 
 int main(int argc, char * argv[]) {
     // defaults
@@ -168,7 +72,8 @@ int main(int argc, char * argv[]) {
     }
 
     if (run_test) {
-        return run_test_suite();
+        // TODO
+        return EXIT_FAILURE;
     }
 
     if (version < 0 || version >= IMPLEMENTATION_COUNT) {
