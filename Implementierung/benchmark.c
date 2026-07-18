@@ -219,12 +219,129 @@ int run_benchmark_suite(const CalculationParams *params, unsigned repetitions, c
         .case_count = color_case_count,
     };
 
-    constexpr size_t test_case_count = 3;
+    static const ssize_t height_values[] = {
+        1, 2, 4, 8, 16, 100, -100, 200, -200, 300, -300, 400, -400, 500, -500
+    };
+    static const char *height_labels[] = {
+        "height=1", "height=2", "height=4", "height=8", "height=16", "height=100", "height=-100", "height=200",
+        "height=-200", "height=300", "height=-300", "height=400", "height=-400", "height=500", "height=-500"
+    };
+
+    constexpr size_t height_case_count = 15;
+    BenchmarkCase height_cases[height_case_count];
+
+    for (size_t i = 0; i < height_case_count; ++i) {
+        height_cases[i].column_label = height_labels[i];
+        height_cases[i].params = *params;
+        height_cases[i].params.height = height_values[i];
+    }
+
+    const BenchmarkTest height_test = {
+        .title = "Image-height benchmark",
+        .changed_parameter = "height",
+        .base_params = *params,
+        .cases = height_cases,
+        .case_count = height_case_count,
+    };
+
+    static const ssize_t width_values[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+    static const char *width_labels[] = {
+        "width=1", "width=2", "width=3", "width=4", "width=5", "width=6", "width=7", "width=8", "width=9", "width=10"
+    };
+
+    constexpr size_t width_case_count = 10;
+    BenchmarkCase width_cases[width_case_count];
+
+    for (size_t i = 0; i < width_case_count; ++i) {
+        width_cases[i].column_label = width_labels[i];
+        width_cases[i].params = *params;
+        width_cases[i].params.width = width_values[i];
+    }
+
+    const BenchmarkTest width_test = {
+        .title = "Small-width benchmark",
+        .changed_parameter = "width",
+        .base_params = *params,
+        .cases = width_cases,
+        .case_count = width_case_count,
+    };
+
+    static const float complex start_values[] = {
+        -2.0f + 1.5f * I,
+        0.0f + 0.0f * I,
+        -2.0f + 0.0f * I,
+        2.0f + 0.0f * I,
+        10.0f + 10.0f * I,
+    };
+    static const char *start_labels[] = {
+        "start=-2+1.5i",
+        "start=0+0i",
+        "start=-2+0i",
+        "start=2+0i",
+        "start=10+10i",
+    };
+
+    constexpr size_t start_case_count = 5;
+    BenchmarkCase start_cases[start_case_count];
+
+    for (size_t i = 0; i < start_case_count; ++i) {
+        start_cases[i].column_label = start_labels[i];
+        start_cases[i].params = *params;
+        start_cases[i].params.start = start_values[i];
+    }
+
+    const BenchmarkTest start_test = {
+        .title = "Starting-complex-number benchmark",
+        .changed_parameter = "start",
+        .base_params = *params,
+        .cases = start_cases,
+        .case_count = start_case_count,
+    };
+
+    static const float complex c_values[] = {
+        -0.5125f + 0.5213f * I,
+        0.0f + 0.0f * I,
+        -1.0f + 0.0f * I,
+        1.0f + 0.0f * I,
+        0.0f + 1.0f * I,
+        10.0f + 10.0f * I,
+    };
+    static const char *c_labels[] = {
+        "c=-0.5125+0.5213i",
+        "c=0+0i",
+        "c=-1+0i",
+        "c=1+0i",
+        "c=0+1i",
+        "c=10+10i",
+    };
+
+    constexpr size_t c_case_count = 6;
+    BenchmarkCase c_cases[c_case_count];
+
+    for (size_t i = 0; i < c_case_count; ++i) {
+        c_cases[i].column_label = c_labels[i];
+        c_cases[i].params = *params;
+        c_cases[i].params.c = c_values[i];
+    }
+
+    const BenchmarkTest c_test = {
+        .title = "Julia-constant benchmark",
+        .changed_parameter = "c",
+        .base_params = *params,
+        .cases = c_cases,
+        .case_count = c_case_count,
+    };
+
+    constexpr size_t test_case_count = 8;
     const BenchmarkTest tests[] = {
-        n_test,
+        start_test,
+        c_test,
         dimension_test_grayscale,
         dimension_test_color,
-        color_test
+        color_test,
+        height_test,
+        width_test,
+        n_test
     };
 
     int status = EXIT_SUCCESS;
