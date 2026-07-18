@@ -46,15 +46,16 @@ int input_error(const char* message) {
 
 static void print_help(void) {
     printf("Help Message\n");
-    printf("  -V <0..3>                   implementation version (default is 0)\n");
-    printf("      0                       SIMD with count-subtraction optimization\n");
-    printf("      1                       SIMD with count-subtraction optimization + mm_movemask only on every kth-iteration\n");
-    printf("      2                       baseline SIMD\n");
-    printf("      3                       scalar reference\n");
+    printf("  -V <0..4>                   implementation version (default is 0)\n");
+    printf("      0                       SIMD with count-subtraction optimization + SIMD pixel writing\n");
+    printf("      1                       scalar reference\n");
+    printf("      2                       SIMD with count-subtraction optimization\n"); // TODO remove 2 through 4
+    printf("      3                       SIMD with count-subtraction optimization + mm_movemask only on every kth-iteration\n");
+    printf("      4                       baseline SIMD\n");
     printf("  -B <number>                 runtime measurement iterations (default is 0)\n");
     printf("  -s <real>,<imag>            start point\n");
     printf("  -d <width>,<height>         image dimensions in pixels\n");
-    printf("  -n <number>                 maximum iterations per pixel\n");
+    printf("  -n <number>                 maximum iterations per pixel (0 through INT_MAX)\n");
     printf("  -i, --check-interval <K>   check fully escaped SIMD blocks every K iterations\n");
     printf("                              default is 1; supported by V1 only\n");
     printf("  -r <number>                 step per pixel\n");
@@ -222,8 +223,8 @@ int parse_args(int argc, char* argv[], int* version, int* benchmark_runs, float 
                 break;
             }
             case 'n':
-                if (!parse_unsigned_arg(optarg, n)) {
-                    return argument_error("Invalid -n value. Expected non-negative integer");
+                if (!parse_unsigned_arg(optarg, n) || *n > (unsigned) INT_MAX) {
+                    return argument_error("Invalid -n value. Expected integer from 0 through INT_MAX");
                 }
                 break;
             case 'i':
@@ -285,8 +286,8 @@ int parse_args(int argc, char* argv[], int* version, int* benchmark_runs, float 
 int write_bmp(const char* filename, ssize_t width, ssize_t height, bool color, const unsigned char* img) {
     const size_t image_width = (size_t) width;
     const size_t image_height = abs_height(height);
-    const uint16_t bits_per_pixel = color ? 24 : 8;
-    const size_t bytes_per_pixel = color ? 3 : 1;
+    const uint16_t bits_per_pixel = color ? 32 : 8;
+    const size_t bytes_per_pixel = color ? 4 : 1;
     const size_t raw_row_length = image_width * bytes_per_pixel;
     const size_t padding = (4 - raw_row_length % 4) % 4;
     const size_t row_length = raw_row_length + padding;
@@ -336,7 +337,7 @@ int write_bmp(const char* filename, ssize_t width, ssize_t height, bool color, c
         return EXIT_FAILURE;
     }
 
-    // TODO note in the projektbericht the difference between defining a color palette and just using 24 bit for non colo
+    // TODO note in the projektbericht the difference between defining a color palette and just using 32 bit for non color
     if (!color) {
         // color palette with grayscale (0x000000 to 0xFFFFFF with equal r g and b values)
         for (uint32_t i = 0; i < 256; ++i) {

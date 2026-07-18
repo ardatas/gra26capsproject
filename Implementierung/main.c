@@ -40,8 +40,8 @@ static const TestScenario test_scenarios[] = {
 };
 
 enum {
-    IMPLEMENTATION_COUNT = 4,
-    REFERENCE_VERSION = 3,
+    IMPLEMENTATION_COUNT = 5,
+    REFERENCE_VERSION = 1,
     TEST_CHECK_INTERVAL = 8,
 };
 
@@ -56,11 +56,15 @@ static void run_version(int version, const TestScenario* scenario, unsigned char
                      scenario->res, scenario->n, scenario->color, img);
             break;
         case 2:
-            julia_V2(scenario->c, scenario->start, (size_t) scenario->width, scenario->height,
+            julia_simd(scenario->c, scenario->start, (size_t) scenario->width, scenario->height,
                      scenario->res, scenario->n, scenario->color, img);
             break;
         case 3:
-            julia_V3(scenario->c, scenario->start, (size_t) scenario->width, scenario->height,
+            julia_count_optimization(scenario->c, scenario->start, (size_t) scenario->width, scenario->height,
+                     scenario->res, scenario->n, scenario->color, img);
+            break;
+        case 4:
+            julia_k_iteration(scenario->c, scenario->start, (size_t) scenario->width, scenario->height,
                      scenario->res, scenario->n, scenario->color, img);
             break;
         default:
@@ -82,7 +86,7 @@ static int run_test_suite(void) {
         const TestScenario* scenario = &test_scenarios[i];
         const size_t width = (size_t) scenario->width;
         const size_t height = abs_height(scenario->height);
-        const size_t bytes_per_pixel = scenario->color ? 3 : 1;
+        const size_t bytes_per_pixel = scenario->color ? 4 : 1;
         const size_t raw_row_length = width * bytes_per_pixel;
         const size_t row_length = raw_row_length + (4 - raw_row_length % 4) % 4;
         const size_t image_size = row_length * height;
@@ -168,7 +172,7 @@ int main(int argc, char * argv[]) {
     }
 
     if (version < 0 || version >= IMPLEMENTATION_COUNT) {
-        return input_error("Only implementation versions 0 to 3 are available");
+        return input_error("Only implementation versions 0 to 4 are available");
     }
 
     if (check_interval_given && version != 1) {
@@ -212,7 +216,7 @@ int main(int argc, char * argv[]) {
 
     const size_t image_width = (size_t) width;
     const size_t image_height = abs_height(height);
-    const size_t bytes_per_pixel = color ? 3 : 1;
+    const size_t bytes_per_pixel = color ? 4 : 1;
     const size_t raw_row_length = image_width * bytes_per_pixel;
     const size_t padding = (4 - raw_row_length % 4) % 4;
     const size_t row_length = raw_row_length + padding;
@@ -251,16 +255,18 @@ int main(int argc, char * argv[]) {
                 julia_V1(c, start, image_width, height, res, n, color, img);
                 break;
             case 2:
-                julia_V2(c, start, image_width, height, res, n, color, img);
+                julia_simd(c, start, image_width, height, res, n, color, img);
                 break;
             case 3:
-                julia_V3(c, start, image_width, height, res, n, color, img);
+                julia_count_optimization(c, start, image_width, height, res, n, color, img);
+                break;
+            case 4:
+                julia_k_iteration(c, start, image_width, height, res, n, color, img);
                 break;
             default:
                 break;
         }
     }
-
 
     if (benchmark_runs > 0 && clock_gettime(CLOCK_MONOTONIC, &end_time) == -1) {
         perror("clock_gettime");

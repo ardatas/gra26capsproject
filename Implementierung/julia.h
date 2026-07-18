@@ -8,7 +8,8 @@
 void julia_set_check_interval(unsigned k);
 void julia(float complex c, float complex start, size_t width, ssize_t height, float res, unsigned n, bool color, unsigned char* img);
 void julia_V1(float complex c, float complex start, size_t width, ssize_t height, float res, unsigned n, bool color, unsigned char* img);
-void julia_V2(float complex c, float complex start, size_t width, ssize_t height, float res, unsigned n, bool color, unsigned char* img);
-void julia_V3(float complex c, float complex start, size_t width, ssize_t height, float res, unsigned n, bool color, unsigned char* img);
+void julia_k_iteration(float complex c, float complex start, size_t width, ssize_t height, float res, unsigned n, bool color, unsigned char* img);
+void julia_count_optimization(float complex c, float complex start, size_t width, ssize_t height, float res, unsigned n, bool color, unsigned char* img);
+void julia_simd(float complex c, float complex start, size_t width, ssize_t height, float res, unsigned n, bool color, unsigned char* img);
 
 #endif //GRA26CAPSPROJECT_T146_JULIA_H
