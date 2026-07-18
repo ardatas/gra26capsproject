@@ -171,7 +171,7 @@ int run_benchmark_suite(const CalculationParams *params, unsigned repetitions, c
         {.width = 3200, .height = -2400, .res = 0.00125f, .label = "3200x2400, res=0.00125"},
     };
 
-    const size_t dimension_case_count = 8;
+    const size_t dimension_case_count = sizeof(dimension_values) / sizeof(dimension_values[0]);
     BenchmarkCase dimension_cases_grayscale[dimension_case_count];
     BenchmarkCase dimension_cases_color[dimension_case_count];
 
