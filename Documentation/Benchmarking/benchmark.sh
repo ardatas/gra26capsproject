@@ -12,6 +12,7 @@ FINAL_K="${FINAL_K:-8}"
 K_VALUES=(1 2 4 8 16)
 CORRECTNESS_K_VALUES=(1 2 4 8 16 1000)
 VERSIONS=(0 1 2 3)
+PAIR_VERSIONS=(2 3)
 REFERENCE_VERSION=3
 
 # name|dimensions|resolution|iterations|start|c|color|repetitions
@@ -22,10 +23,57 @@ SCENARIOS=(
     "c_dendrite|800,-600|0.005|100|-2,1.5|0,1|gray|200"
 )
 
+# V2 versus V3 with representative changes to the complex-plane workload.
+INPUT_SCENARIOS=(
+    "start_outside|800,-600|0.005|100|3,3|-0.5125,0.5213|gray|200"
+    "c_zero|800,-600|0.005|100|-2,1.5|0,0|gray|200"
+    "escaped_lane|800,-600|0.005|100|-2,1.5|1,1|gray|200"
+)
+
+# The dimensions grow with scale while resolution shrinks, preserving the viewport.
+# Repetitions are approximately 200 / scale^2 so each timed interval stays practical.
+RESOLUTION_GRAY_SCENARIOS=(
+    "resolution_gray_0.1|80,-60|0.05|100|-2,1.5|-0.5125,0.5213|gray|20000"
+    "resolution_gray_0.25|200,-150|0.02|100|-2,1.5|-0.5125,0.5213|gray|3200"
+    "resolution_gray_0.5|400,-300|0.01|100|-2,1.5|-0.5125,0.5213|gray|800"
+    "resolution_gray_2|1600,-1200|0.0025|100|-2,1.5|-0.5125,0.5213|gray|50"
+    "resolution_gray_4|3200,-2400|0.00125|100|-2,1.5|-0.5125,0.5213|gray|13"
+    "resolution_gray_8|6400,-4800|0.000625|100|-2,1.5|-0.5125,0.5213|gray|3"
+)
+
+# Scale 1 is the existing default_color scenario. These two points test interaction
+# between color conversion and a smaller or larger pixel count without a full duplicate sweep.
+RESOLUTION_COLOR_SCENARIOS=(
+    "resolution_color_0.25|200,-150|0.02|100|-2,1.5|-0.5125,0.5213|color|3200"
+    "resolution_color_4|3200,-2400|0.00125|100|-2,1.5|-0.5125,0.5213|color|13"
+)
+
+# Vary n while keeping dimensions and viewport fixed. The existing default_gray
+# scenario supplies n=100 and high_iteration supplies n=1000.
+ITERATION_VALUES=(1 2 4 8 16 32 64 128 256)
+ITERATION_SCENARIOS=()
+for iterations in "${ITERATION_VALUES[@]}"; do
+    repetitions=$(( (20000 + iterations / 2) / iterations ))
+    if [ "$repetitions" -gt 200 ]; then repetitions=200; fi
+    ITERATION_SCENARIOS+=(
+        "iterations_$iterations|800,-600|0.005|$iterations|-2,1.5|-0.5125,0.5213|gray|$repetitions"
+    )
+done
+
+# A bounded, nearly constant workload isolates SIMD setup and scalar-tail costs.
+# Repetitions are approximately 200 * 800 / width.
+WIDTH_VALUES=(1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 32 64 128 256 800)
+WIDTH_SCENARIOS=()
+for width in "${WIDTH_VALUES[@]}"; do
+    repetitions=$(( (160000 + width / 2) / width ))
+    WIDTH_SCENARIOS+=(
+        "width_$width|$width,-64|0.000001|100|0,0|0,0|gray|$repetitions"
+    )
+done
+
 # Correctness-only inputs.
 GATE_SCENARIOS=(
     "simd_tail|801,-600|0.005|100|-2,1.5|-0.5125,0.5213|gray|0"
-    "escaped_lane|800,-600|0.005|100|-2,1.5|1,1|gray|0"
     "bottom_up|800,600|0.005|100|-2,-1.5|-0.5125,0.5213|gray|0"
     "n_zero|800,-600|0.005|0|-2,1.5|-0.5125,0.5213|gray|0"
 )
@@ -153,6 +201,27 @@ measure() {
         "$experiment" "$scenario" "$trial" "$version" "$check_interval" "$seconds_per_run"
 }
 
+measure_pair_scenarios() {
+    local experiment="$1"
+    shift
+    local scenario
+    local name dims resolution iterations start constant color repetitions
+    local trial rotation offset index version
+
+    for scenario in "$@"; do
+        IFS='|' read -r name dims resolution iterations start constant color repetitions <<< "$scenario"
+        for trial in $(seq 1 "$TRIALS"); do
+            rotation=$(( (trial - 1) % ${#PAIR_VERSIONS[@]} ))
+            for ((offset = 0; offset < ${#PAIR_VERSIONS[@]}; ++offset)); do
+                index=$(( (rotation + offset) % ${#PAIR_VERSIONS[@]} ))
+                version="${PAIR_VERSIONS[$index]}"
+                measure "$experiment" "$name" "$trial" "$version" 1 "$repetitions" "$dims" \
+                    "$resolution" "$iterations" "$start" "$constant" "$color"
+            done
+        done
+    done
+}
+
 cd "$IMPL_DIR"
 make clean
 make
@@ -174,7 +243,13 @@ printf 'experiment,scenario,trial,version,k,repetitions,seconds_per_run,width,he
     > "$MEASUREMENTS_FILE"
 
 echo "=== Correctness ==="
-for scenario in "${SCENARIOS[@]}" "${GATE_SCENARIOS[@]}"; do
+for scenario in "${SCENARIOS[@]}" \
+                "${INPUT_SCENARIOS[@]}" \
+                "${RESOLUTION_GRAY_SCENARIOS[@]}" \
+                "${RESOLUTION_COLOR_SCENARIOS[@]}" \
+                "${ITERATION_SCENARIOS[@]}" \
+                "${WIDTH_SCENARIOS[@]}" \
+                "${GATE_SCENARIOS[@]}"; do
     IFS='|' read -r name dims resolution iterations start constant color repetitions <<< "$scenario"
     reference="$TEMP_DIR/$name-V$REFERENCE_VERSION.bmp"
     run_project "$REFERENCE_VERSION" 1 0 "$dims" "$resolution" "$iterations" "$start" "$constant" "$color" "$reference"
@@ -221,5 +296,20 @@ for scenario in "${SCENARIOS[@]}"; do
         done
     done
 done
+
+echo "=== V2 versus V3: complex input values ==="
+measure_pair_scenarios input_values "${INPUT_SCENARIOS[@]}"
+
+echo "=== V2 versus V3: grayscale resolution scale ==="
+measure_pair_scenarios resolution_gray "${RESOLUTION_GRAY_SCENARIOS[@]}"
+
+echo "=== V2 versus V3: selected color resolution scales ==="
+measure_pair_scenarios resolution_color "${RESOLUTION_COLOR_SCENARIOS[@]}"
+
+echo "=== V2 versus V3: maximum iterations ==="
+measure_pair_scenarios iteration_limit "${ITERATION_SCENARIOS[@]}"
+
+echo "=== V2 versus V3: SIMD width and scalar tail ==="
+measure_pair_scenarios width_tail "${WIDTH_SCENARIOS[@]}"
 
 echo "Results saved in $RUN_DIR"

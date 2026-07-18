@@ -32,6 +32,8 @@ static const TestScenario test_scenarios[] = {
      -2.0f + 1.5f * I, -0.5125f + 0.5213f * I, true},
     {"high_iteration", "Higher iteration bound", 800, -600, 0.005f, 1000,
      -2.0f + 1.5f * I, -0.5125f + 0.5213f * I, false},
+    {"c_dendrite", "Dendrite Julia constant with different escape behavior", 800, -600, 0.005f, 100,
+     -2.0f + 1.5f * I, 0.0f + 1.0f * I, false},
     {"simd_tail", "Width not divisible by four, so the scalar tail is used", 801, -600, 0.005f, 100,
      -2.0f + 1.5f * I, -0.5125f + 0.5213f * I, false},
     {"escaped_lane", "Divergent SIMD lanes with early escapes", 800, -600, 0.005f, 100,
