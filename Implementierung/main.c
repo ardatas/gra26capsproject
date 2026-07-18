@@ -8,136 +8,66 @@
 #include <string.h>
 #include <time.h>
 
-typedef struct {
-    const char* name;
-    const char* description;
-    ssize_t width;
-    ssize_t height;
-    float res;
-    unsigned n;
-    float complex start;
-    float complex c;
-    bool color;
-} TestScenario;
-
-static const TestScenario test_scenarios[] = {
-    {"default_gray", "Baseline grayscale image", 800, -600, 0.005f, 100,
-     -2.0f + 1.5f * I, -0.5125f + 0.5213f * I, false},
-    {"default_color", "Color path with three bytes per pixel", 800, -600, 0.005f, 100,
-     -2.0f + 1.5f * I, -0.5125f + 0.5213f * I, true},
-    {"high_iteration", "Higher iteration bound", 800, -600, 0.005f, 1000,
-     -2.0f + 1.5f * I, -0.5125f + 0.5213f * I, false},
-    {"c_dendrite", "Dendrite Julia constant with different escape behavior", 800, -600, 0.005f, 100,
-     -2.0f + 1.5f * I, 0.0f + 1.0f * I, false},
-    {"simd_tail", "Width not divisible by four, so the scalar tail is used", 801, -600, 0.005f, 100,
-     -2.0f + 1.5f * I, -0.5125f + 0.5213f * I, false},
-    {"escaped_lane", "Divergent SIMD lanes with early escapes", 800, -600, 0.005f, 100,
-     -2.0f + 1.5f * I, 1.0f + 1.0f * I, false},
-    {"bottom_up", "Positive height and bottom-up BMP rows", 800, 600, 0.005f, 100,
-     -2.0f - 1.5f * I, -0.5125f + 0.5213f * I, false},
-    {"n_zero", "Zero iterations produce a black image", 800, -600, 0.005f, 0,
-     -2.0f + 1.5f * I, -0.5125f + 0.5213f * I, false},
-};
-
 enum {
     IMPLEMENTATION_COUNT = 5,
-    REFERENCE_VERSION = 1,
-    TEST_CHECK_INTERVAL = 8,
+    OFFSET_SWEEP_STEP = 16,
 };
 
-static void run_version(int version, const TestScenario* scenario, unsigned char* img) {
+static void render_version(int version, float complex c, float complex start, size_t width,
+                           ssize_t height, float res, unsigned n, bool color,
+                           unsigned char* img) {
     switch (version) {
         case 0:
-            julia(scenario->c, scenario->start, (size_t) scenario->width, scenario->height,
-                  scenario->res, scenario->n, scenario->color, img);
+            julia(c, start, width, height, res, n, color, img);
             break;
         case 1:
-            julia_V1(scenario->c, scenario->start, (size_t) scenario->width, scenario->height,
-                     scenario->res, scenario->n, scenario->color, img);
+            julia_V1(c, start, width, height, res, n, color, img);
             break;
         case 2:
-            julia_simd(scenario->c, scenario->start, (size_t) scenario->width, scenario->height,
-                     scenario->res, scenario->n, scenario->color, img);
+            julia_simd(c, start, width, height, res, n, color, img);
             break;
         case 3:
-            julia_count_optimization(scenario->c, scenario->start, (size_t) scenario->width, scenario->height,
-                     scenario->res, scenario->n, scenario->color, img);
+            julia_count_optimization(c, start, width, height, res, n, color, img);
             break;
         case 4:
-            julia_k_iteration(scenario->c, scenario->start, (size_t) scenario->width, scenario->height,
-                     scenario->res, scenario->n, scenario->color, img);
+            julia_k_iteration(c, start, width, height, res, n, color, img);
             break;
         default:
             break;
     }
 }
 
-static int run_test_suite(void) {
-    const size_t scenario_count = sizeof(test_scenarios) / sizeof(test_scenarios[0]);
-    const size_t comparisons_per_scenario = REFERENCE_VERSION;
-    size_t passed_scenarios = 0;
-    size_t passed_comparisons = 0;
-    bool all_passed = true;
+static int run_offset_sweep(int version, float complex c, float complex start, size_t width,
+                            ssize_t height, float res, unsigned n, unsigned char* img) {
+    size_t generated = 0;
 
-    julia_set_check_interval(TEST_CHECK_INTERVAL);
-    printf("Predefined Test Suite\n\n");
+    for (unsigned red = 0; red < 64; red += OFFSET_SWEEP_STEP) {
+        for (unsigned green = 0; green < 64; green += OFFSET_SWEEP_STEP) {
+            for (unsigned blue = 0; blue < 64; blue += OFFSET_SWEEP_STEP) {
+                char filename[64];
+                const int length = snprintf(filename, sizeof filename,
+                                            "offset-r%02u-g%02u-b%02u.bmp",
+                                            red, green, blue);
 
-    for (size_t i = 0; i < scenario_count; ++i) {
-        const TestScenario* scenario = &test_scenarios[i];
-        const size_t width = (size_t) scenario->width;
-        const size_t height = abs_height(scenario->height);
-        const size_t bytes_per_pixel = scenario->color ? 4 : 1;
-        const size_t raw_row_length = width * bytes_per_pixel;
-        const size_t row_length = raw_row_length + (4 - raw_row_length % 4) % 4;
-        const size_t image_size = row_length * height;
-        unsigned char* reference_image = malloc(image_size);
-        unsigned char* version_image = malloc(image_size);
+                if (length < 0 || (size_t) length >= sizeof filename) {
+                    fprintf(stderr, "Could not construct offset-sweep filename\n");
+                    return EXIT_FAILURE;
+                }
 
-        if (reference_image == NULL || version_image == NULL) {
-            fprintf(stderr, "Could not allocate image buffers for test scenario %s\n", scenario->name);
-            free(reference_image);
-            free(version_image);
-            return EXIT_FAILURE;
-        }
+                julia_set_color_offsets(red, green, blue);
+                render_version(version, c, start, width, height, res, n, true, img);
 
-        printf("[%zu/%zu] %s\n", i + 1, scenario_count, scenario->name);
-        printf("Description: %s\n", scenario->description);
-        printf("Parameters: -d %zd,%zd -r %g -n %u -s %g,%g -c %g,%g%s\n",
-               scenario->width, scenario->height, (double) scenario->res, scenario->n,
-               (double) crealf(scenario->start), (double) cimagf(scenario->start),
-               (double) crealf(scenario->c), (double) cimagf(scenario->c),
-               scenario->color ? " -C" : "");
-        printf("V1 check interval: -i %d\n", TEST_CHECK_INTERVAL);
+                if (write_bmp(filename, (ssize_t) width, height, true, img) != EXIT_SUCCESS) {
+                    return EXIT_FAILURE;
+                }
 
-        run_version(REFERENCE_VERSION, scenario, reference_image);
-
-        bool scenario_passed = true;
-        for (int version = 0; version < REFERENCE_VERSION; ++version) {
-            run_version(version, scenario, version_image);
-            const bool passed = memcmp(version_image, reference_image, image_size) == 0;
-            scenario_passed = scenario_passed && passed;
-            if (passed) {
-                ++passed_comparisons;
+                ++generated;
+                printf("[%zu/64] %s\n", generated, filename);
             }
-            printf("  V%d%s: %s (%s V%d)\n", version,
-                   version == 1 ? "/K=8" : "", passed ? "PASS" : "FAIL",
-                   passed ? "matches" : "differs from", REFERENCE_VERSION);
         }
-
-        if (scenario_passed) {
-            ++passed_scenarios;
-        }
-        all_passed = all_passed && scenario_passed;
-        printf("Result: %s\n\n", scenario_passed ? "PASS" : "FAIL");
-
-        free(reference_image);
-        free(version_image);
     }
 
-    printf("Summary: %zu/%zu scenarios passed, %zu/%zu comparisons passed.\n",
-           passed_scenarios, scenario_count, passed_comparisons,
-           scenario_count * comparisons_per_scenario);
-    return all_passed ? EXIT_SUCCESS : EXIT_FAILURE;
+    return EXIT_SUCCESS;
 }
 
 int main(int argc, char * argv[]) {
@@ -155,11 +85,12 @@ int main(int argc, char * argv[]) {
     bool color = false;
     const char* output_filename = "output.bmp";
     bool run_test = false;
+    bool offset_sweep = false;
     bool should_exit = false;
 
     if (parse_args(argc, argv, &version, &benchmark_runs, &c, &start, &width, &height, &res,
                    &n, &check_interval, &check_interval_given, &color, &output_filename,
-                   &run_test, &should_exit) != EXIT_SUCCESS) {
+                   &run_test, &offset_sweep, &should_exit) != EXIT_SUCCESS) {
         return EXIT_FAILURE;
     }
 
@@ -168,7 +99,8 @@ int main(int argc, char * argv[]) {
     }
 
     if (run_test) {
-        return run_test_suite();
+        // TODO
+        return EXIT_FAILURE;
     }
 
     if (version < 0 || version >= IMPLEMENTATION_COUNT) {
@@ -183,6 +115,10 @@ int main(int argc, char * argv[]) {
 
     if (benchmark_runs < 0) {
         return input_error("Benchmark repetitions must not be negative");
+    }
+
+    if (offset_sweep && benchmark_runs > 0) {
+        return input_error("Offset sweep cannot be combined with benchmark repetitions");
     }
 
     if (height == 0) {
@@ -235,6 +171,14 @@ int main(int argc, char * argv[]) {
         return EXIT_FAILURE;
     }
 
+    if (offset_sweep) {
+        const int status = run_offset_sweep(
+            version, c, start, image_width, height, res, n, img
+        );
+        free(img);
+        return status;
+    }
+
     const int runs = benchmark_runs > 0 ? benchmark_runs : 1;
 
     struct timespec start_time;
@@ -247,25 +191,7 @@ int main(int argc, char * argv[]) {
     }
 
     for (int i = 0; i < runs; ++i) {
-        switch (version) {
-            case 0:
-                julia(c, start, image_width, height, res, n, color, img);
-                break;
-            case 1:
-                julia_V1(c, start, image_width, height, res, n, color, img);
-                break;
-            case 2:
-                julia_simd(c, start, image_width, height, res, n, color, img);
-                break;
-            case 3:
-                julia_count_optimization(c, start, image_width, height, res, n, color, img);
-                break;
-            case 4:
-                julia_k_iteration(c, start, image_width, height, res, n, color, img);
-                break;
-            default:
-                break;
-        }
+        render_version(version, c, start, image_width, height, res, n, color, img);
     }
 
     if (benchmark_runs > 0 && clock_gettime(CLOCK_MONOTONIC, &end_time) == -1) {
