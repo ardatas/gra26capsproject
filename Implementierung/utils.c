@@ -37,8 +37,8 @@ size_t abs_height(ssize_t height) {
 static void print_help(void) {
     printf("Help Message\n");
     printf("  -V <0..3>                   implementation version (default is 0)\n");
-    printf("      0                       optimized SIMD main\n");
-    printf("      1                       SIMD with count-subtraction optimization\n");
+    printf("      0                       SIMD with count-subtraction optimization\n");
+    printf("      1                       SIMD with count-subtraction optimization + mm_movemask only on every kth-iteration\n");
     printf("      2                       baseline SIMD\n");
     printf("      3                       scalar reference\n");
     printf("  -B <number>                 benchmark repetitions (default is 0)\n");
@@ -46,14 +46,14 @@ static void print_help(void) {
     printf("  -d <width>,<height>         image dimensions in pixels\n");
     printf("  -n <number>                 maximum iterations per pixel\n");
     printf("  -i, --check-interval <K>   check fully escaped SIMD blocks every K iterations\n");
-    printf("                              default is 1; supported by V0 only\n");
+    printf("                              default is 1; supported by V1 only\n");
     printf("  -r <number>                 resolution per pixel\n");
     printf("  -c <real>,<imag>            julia constant c\n");
     printf("  -o <filename>               output BMP file\n");
     printf("  -C, --color                 enable color output (default is grayscale)\n");
     printf("  -t, --test                  run all predefined correctness scenarios and exit\n");
     printf("  -h, --help                  show this help\n");
-    printf("  Example: ./project -V 0 -i 8 -B 100 -o output.bmp\n");
+    printf("  Example: ./project -V 1 -i 8 -B 100 -o output.bmp\n");
 }
 
 static bool is_allowed_output_filename(const char* filename) {

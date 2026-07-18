@@ -1,9 +1,4 @@
-//
-// Created by Noah Schneider on 29.06.26.
-// Edit by Arda Tas on 11.07.26.
-//
-
-#define _POSIX_C_SOURCE 200809L 
+#define _POSIX_C_SOURCE 200809L
 #include "julia.h"
 #include "utils.h"
 #include <math.h>
@@ -108,7 +103,7 @@ static int run_test_suite(void) {
                (double) crealf(scenario->start), (double) cimagf(scenario->start),
                (double) crealf(scenario->c), (double) cimagf(scenario->c),
                scenario->color ? " -C" : "");
-        printf("V0 check interval: -i %d\n", TEST_CHECK_INTERVAL);
+        printf("V1 check interval: -i %d\n", TEST_CHECK_INTERVAL);
 
         run_version(REFERENCE_VERSION, scenario, reference_image);
 
@@ -121,7 +116,7 @@ static int run_test_suite(void) {
                 ++passed_comparisons;
             }
             printf("  V%d%s: %s (%s V%d)\n", version,
-                   version == 0 ? "/K=8" : "", passed ? "PASS" : "FAIL",
+                   version == 1 ? "/K=8" : "", passed ? "PASS" : "FAIL",
                    passed ? "matches" : "differs from", REFERENCE_VERSION);
         }
 
@@ -177,8 +172,8 @@ int main(int argc, char * argv[]) {
         return EXIT_FAILURE;
     }
 
-    if (check_interval_given && version != 0) {
-        fprintf(stderr, "Only implementation version 0 supports the check interval\n");
+    if (check_interval_given && version != 1) {
+        fprintf(stderr, "Only implementation version 1 supports the check interval\n");
         return EXIT_FAILURE;
     }
 
@@ -230,10 +225,10 @@ int main(int argc, char * argv[]) {
     const size_t bytes_per_pixel = color ? 3 : 1;
     const size_t raw_row_length = image_width * bytes_per_pixel;
     const size_t padding = (4 - raw_row_length % 4) % 4;
-    const size_t row_stride = raw_row_length + padding;
+    const size_t row_length = raw_row_length + padding;
     const size_t palette_size = color ? 0 : 256 * 4;
     const size_t pixel_offset = 14 + 40 + palette_size;
-    const size_t pixel_data_size = row_stride * image_height;
+    const size_t pixel_data_size = row_length * image_height;
 
     if (pixel_data_size > UINT32_MAX - pixel_offset) {
         fprintf(stderr, "Image dimensions are too large for BMP output\n");

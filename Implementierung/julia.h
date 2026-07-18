@@ -1,7 +1,3 @@
-//
-// Created by Noah Schneider on 29.06.26.
-//
-
 #ifndef GRA26CAPSPROJECT_T146_JULIA_H
 #define GRA26CAPSPROJECT_T146_JULIA_H
 #include <complex.h>
