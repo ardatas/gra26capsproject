@@ -1,4 +1,5 @@
 #include "utils.h"
+#include <errno.h>
 #include <getopt.h>
 #include <math.h>
 #include <stdint.h>
@@ -98,7 +99,7 @@ static bool parse_float_until(const char *text, char **end, float *value) {
 }
 
 static bool parse_int_arg(const char *text, int *value) {
-    char *end = nullptr;
+    char *end = NULL;
     long parsed;
 
     if (!parse_long_until(text, &end, &parsed) || *end != '\0' ||
@@ -111,7 +112,7 @@ static bool parse_int_arg(const char *text, int *value) {
 }
 
 static bool parse_unsigned_arg(const char *text, unsigned *value) {
-    char *end = nullptr;
+    char *end = NULL;
     long parsed;
 
     if (!parse_long_until(text, &end, &parsed) || *end != '\0' ||
@@ -124,7 +125,7 @@ static bool parse_unsigned_arg(const char *text, unsigned *value) {
 }
 
 static bool parse_float_arg(const char *text, float *value) {
-    char *end = nullptr;
+    char *end = NULL;
 
     if (!parse_float_until(text, &end, value) || *end != '\0') {
         return false;
@@ -134,7 +135,7 @@ static bool parse_float_arg(const char *text, float *value) {
 }
 
 static bool parse_finite_float_pair_arg(const char *text, float *first, float *second) {
-    char *end = nullptr;
+    char *end = NULL;
     float parsed_first;
     float parsed_second;
 
@@ -154,7 +155,7 @@ static bool parse_finite_float_pair_arg(const char *text, float *first, float *s
 }
 
 static bool parse_ssize_pair_arg(const char *text, ssize_t *first, ssize_t *second) {
-    char *end = nullptr;
+    char *end = NULL;
     long parsed_first;
     long parsed_second;
 
@@ -176,17 +177,17 @@ int parse_args(const int argc, char *argv[], int *version, int *benchmark_runs, 
                float complex *start, ssize_t *width, ssize_t *height, float *res,
                unsigned *n, bool *color, const char **output_filename, bool *run_test, bool *should_exit) {
     static struct option long_options[] = {
-        {.name = "color", .has_arg = no_argument, .flag = nullptr, .val = 'C'},
-        {.name = "check-interval", .has_arg = required_argument, .flag = nullptr, .val = 'i'},
-        {.name = "help", .has_arg = no_argument, .flag = nullptr, .val = 'h'},
-        {.name = "test", .has_arg = no_argument, .flag = nullptr, .val = 't'},
-        {.name = nullptr, .has_arg = 0, .flag = nullptr, .val = 0},
+        {.name = "color", .has_arg = no_argument, .flag = NULL, .val = 'C'},
+        {.name = "check-interval", .has_arg = required_argument, .flag = NULL, .val = 'i'},
+        {.name = "help", .has_arg = no_argument, .flag = NULL, .val = 'h'},
+        {.name = "test", .has_arg = no_argument, .flag = NULL, .val = 't'},
+        {.name = 0, .has_arg = 0, .flag = NULL, .val = 0},
     };
 
     optind = 1;
     opterr = 0;
     int opt;
-    while ((opt = getopt_long(argc, argv, "V:B:s:d:n:r:c:o:Cht", long_options, nullptr)) != -1) {
+    while ((opt = getopt_long(argc, argv, "V:B:s:d:n:r:c:o:Cht", long_options, NULL)) != -1) {
         switch (opt) {
             case 'V':
                 if (!parse_int_arg(optarg, version)) {
