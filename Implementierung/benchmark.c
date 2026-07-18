@@ -1,5 +1,6 @@
 #define _POSIX_C_SOURCE 200809L
 #include "benchmark.h"
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -138,7 +139,7 @@ int run_benchmark_suite(const CalculationParams *params, unsigned repetitions, c
         "n=1", "n=2", "n=4", "n=8", "n=16", "n=32", "n=64", "n=128", "n=256", "n=512", "n=1024", "n=2048"
     };
 
-    constexpr size_t n_case_count = 12;
+    const size_t n_case_count = 12;
     BenchmarkCase n_cases[n_case_count];
 
     for (size_t i = 0; i < n_case_count; ++i) {
@@ -171,7 +172,7 @@ int run_benchmark_suite(const CalculationParams *params, unsigned repetitions, c
         {.width = 6400, .height = -4800, .res = 0.000625f, .label = "6400x4800, res=0.000625"},
     };
 
-    constexpr size_t dimension_case_count = 8;
+    const size_t dimension_case_count = 8;
     BenchmarkCase dimension_cases_grayscale[dimension_case_count];
     BenchmarkCase dimension_cases_color[dimension_case_count];
 
@@ -205,10 +206,17 @@ int run_benchmark_suite(const CalculationParams *params, unsigned repetitions, c
         .case_count = dimension_case_count,
     };
 
-    constexpr size_t color_case_count = 2;
-    BenchmarkCase color_cases[color_case_count] = {
-        {.column_label = "Color=true", .params = *params, .params.color = true},
-        {.column_label = "Color=false", .params = *params, .params.color = false}
+    const size_t color_case_count = 2;
+    BenchmarkCase color_cases[color_case_count];
+    color_cases[0] = (BenchmarkCase) {
+        .column_label = "Color=true",
+        .params = *params,
+        .params.color = true,
+    };
+    color_cases[1] = (BenchmarkCase) {
+        .column_label = "Color=false",
+        .params = *params,
+        .params.color = false,
     };
 
     const BenchmarkTest color_test = {
@@ -227,7 +235,7 @@ int run_benchmark_suite(const CalculationParams *params, unsigned repetitions, c
         "height=-200", "height=300", "height=-300", "height=400", "height=-400", "height=500", "height=-500"
     };
 
-    constexpr size_t height_case_count = 15;
+    const size_t height_case_count = 15;
     BenchmarkCase height_cases[height_case_count];
 
     for (size_t i = 0; i < height_case_count; ++i) {
@@ -249,7 +257,7 @@ int run_benchmark_suite(const CalculationParams *params, unsigned repetitions, c
         "width=1", "width=2", "width=3", "width=4", "width=5", "width=6", "width=7", "width=8", "width=9", "width=10"
     };
 
-    constexpr size_t width_case_count = 10;
+    const size_t width_case_count = 10;
     BenchmarkCase width_cases[width_case_count];
 
     for (size_t i = 0; i < width_case_count; ++i) {
@@ -281,7 +289,7 @@ int run_benchmark_suite(const CalculationParams *params, unsigned repetitions, c
         "start=10+10i",
     };
 
-    constexpr size_t start_case_count = 5;
+    const size_t start_case_count = 5;
     BenchmarkCase start_cases[start_case_count];
 
     for (size_t i = 0; i < start_case_count; ++i) {
@@ -315,7 +323,7 @@ int run_benchmark_suite(const CalculationParams *params, unsigned repetitions, c
         "c=10+10i",
     };
 
-    constexpr size_t c_case_count = 6;
+    const size_t c_case_count = 6;
     BenchmarkCase c_cases[c_case_count];
 
     for (size_t i = 0; i < c_case_count; ++i) {
@@ -332,7 +340,7 @@ int run_benchmark_suite(const CalculationParams *params, unsigned repetitions, c
         .case_count = c_case_count,
     };
 
-    constexpr size_t test_case_count = 8;
+    const size_t test_case_count = 8;
     const BenchmarkTest tests[] = {
         start_test,
         c_test,
