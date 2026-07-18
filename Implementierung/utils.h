@@ -9,7 +9,7 @@
 
 size_t abs_height(ssize_t height);
 
-void print_usage(FILE * stream);
+void print_usage(FILE *stream);
 
 int input_error(const char *message);
 
@@ -17,7 +17,6 @@ int write_bmp(const char *filename, ssize_t width, ssize_t height, bool color, c
 
 int parse_args(int argc, char *argv[], int *version, int *benchmark_runs, float complex *c,
                float complex *start, ssize_t *width, ssize_t *height, float *res,
-               unsigned *n, unsigned *check_interval, bool *check_interval_given,
-               bool *color, const char **output_filename, bool *run_test, bool *should_exit);
+               unsigned *n, bool *color, const char **output_filename, bool *run_test, bool *should_exit);
 
 #endif //GRA26CAPSPROJECT_T146_UTILS_H

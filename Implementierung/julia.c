@@ -1,19 +1,10 @@
 #include <string.h>
 #include "utils.h"
 #include <complex.h>
-#include <stdbool.h>
-#include <stddef.h>
-#include <sys/types.h>
 #if defined(__SSE2__)
 #include <emmintrin.h>
 #include <xmmintrin.h>
 #endif
-
-static unsigned escape_check_interval = 1;
-
-void julia_set_check_interval(unsigned k) {
-    escape_check_interval = k;
-}
 
 static void write_pixel(unsigned char *row, size_t x, unsigned i, unsigned n, bool color) {
     if (!color) {

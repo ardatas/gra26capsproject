@@ -5,8 +5,6 @@
 #include <stddef.h>
 #include <sys/types.h>
 
-void julia_set_check_interval(unsigned k);
-
 void julia(float complex c, float complex start, size_t width, ssize_t height, float res, unsigned n, bool color,
            unsigned char *img);
 

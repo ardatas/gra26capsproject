@@ -169,7 +169,6 @@ int run_benchmark_suite(const CalculationParams *params, unsigned repetitions, c
         {.width = 800, .height = -600, .res = 0.005f, .label = "800x600, res=0.005"},
         {.width = 1600, .height = -1200, .res = 0.0025f, .label = "1600x1200, res=0.0025"},
         {.width = 3200, .height = -2400, .res = 0.00125f, .label = "3200x2400, res=0.00125"},
-        {.width = 6400, .height = -4800, .res = 0.000625f, .label = "6400x4800, res=0.000625"},
     };
 
     const size_t dimension_case_count = 8;

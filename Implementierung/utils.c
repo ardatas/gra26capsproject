@@ -4,7 +4,6 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <errno.h>
 #include <limits.h>
 
 typedef struct __attribute__((packed)) {
@@ -29,7 +28,7 @@ typedef struct __attribute__((packed)) {
     uint32_t colors_important;
 } BMPInfoHeader;
 
-size_t abs_height(ssize_t height) {
+size_t abs_height(const ssize_t height) {
     return height < 0 ? (size_t) -height : (size_t) height;
 }
 
@@ -44,15 +43,11 @@ int input_error(const char *message) {
     return EXIT_FAILURE;
 }
 
-static void print_help(void) {
+static void print_help() {
     printf("Help Message\n");
     printf("  -V <0..4>                   implementation version (default is 0)\n");
     printf("      0                       SIMD with count-subtraction optimization + SIMD pixel writing\n");
     printf("      1                       scalar reference\n");
-    printf("      2                       SIMD with count-subtraction optimization\n"); // TODO remove 2 through 4
-    printf(
-        "      3                       SIMD with count-subtraction optimization + mm_movemask only on every kth-iteration\n");
-    printf("      4                       baseline SIMD\n");
     printf("  -B <number>                 runtime measurement iterations (default is 0)\n");
     printf("  -s <real>,<imag>            start point\n");
     printf("  -d <width>,<height>         image dimensions in pixels\n");
@@ -103,7 +98,7 @@ static bool parse_float_until(const char *text, char **end, float *value) {
 }
 
 static bool parse_int_arg(const char *text, int *value) {
-    char *end = NULL;
+    char *end = nullptr;
     long parsed;
 
     if (!parse_long_until(text, &end, &parsed) || *end != '\0' ||
@@ -116,7 +111,7 @@ static bool parse_int_arg(const char *text, int *value) {
 }
 
 static bool parse_unsigned_arg(const char *text, unsigned *value) {
-    char *end = NULL;
+    char *end = nullptr;
     long parsed;
 
     if (!parse_long_until(text, &end, &parsed) || *end != '\0' ||
@@ -129,7 +124,7 @@ static bool parse_unsigned_arg(const char *text, unsigned *value) {
 }
 
 static bool parse_float_arg(const char *text, float *value) {
-    char *end = NULL;
+    char *end = nullptr;
 
     if (!parse_float_until(text, &end, value) || *end != '\0') {
         return false;
@@ -139,7 +134,7 @@ static bool parse_float_arg(const char *text, float *value) {
 }
 
 static bool parse_finite_float_pair_arg(const char *text, float *first, float *second) {
-    char *end = NULL;
+    char *end = nullptr;
     float parsed_first;
     float parsed_second;
 
@@ -159,7 +154,7 @@ static bool parse_finite_float_pair_arg(const char *text, float *first, float *s
 }
 
 static bool parse_ssize_pair_arg(const char *text, ssize_t *first, ssize_t *second) {
-    char *end = NULL;
+    char *end = nullptr;
     long parsed_first;
     long parsed_second;
 
@@ -177,22 +172,21 @@ static bool parse_ssize_pair_arg(const char *text, ssize_t *first, ssize_t *seco
     return true;
 }
 
-int parse_args(int argc, char *argv[], int *version, int *benchmark_runs, float complex *c,
+int parse_args(const int argc, char *argv[], int *version, int *benchmark_runs, float complex *c,
                float complex *start, ssize_t *width, ssize_t *height, float *res,
-               unsigned *n, unsigned *check_interval, bool *check_interval_given,
-               bool *color, const char **output_filename, bool *run_test, bool *should_exit) {
+               unsigned *n, bool *color, const char **output_filename, bool *run_test, bool *should_exit) {
     static struct option long_options[] = {
-        {"color", no_argument, NULL, 'C'},
-        {"check-interval", required_argument, NULL, 'i'},
-        {"help", no_argument, NULL, 'h'},
-        {"test", no_argument, NULL, 't'},
-        {0, 0, 0, 0},
+        {.name = "color", .has_arg = no_argument, .flag = nullptr, .val = 'C'},
+        {.name = "check-interval", .has_arg = required_argument, .flag = nullptr, .val = 'i'},
+        {.name = "help", .has_arg = no_argument, .flag = nullptr, .val = 'h'},
+        {.name = "test", .has_arg = no_argument, .flag = nullptr, .val = 't'},
+        {.name = nullptr, .has_arg = 0, .flag = nullptr, .val = 0},
     };
 
     optind = 1;
     opterr = 0;
     int opt;
-    while ((opt = getopt_long(argc, argv, "V:B:s:d:n:i:r:c:o:Cht", long_options, NULL)) != -1) {
+    while ((opt = getopt_long(argc, argv, "V:B:s:d:n:r:c:o:Cht", long_options, nullptr)) != -1) {
         switch (opt) {
             case 'V':
                 if (!parse_int_arg(optarg, version)) {
@@ -227,12 +221,6 @@ int parse_args(int argc, char *argv[], int *version, int *benchmark_runs, float 
                 if (!parse_unsigned_arg(optarg, n) || *n > (unsigned) INT_MAX) {
                     return argument_error("Invalid -n value. Expected integer from 0 through INT_MAX");
                 }
-                break;
-            case 'i':
-                if (!parse_unsigned_arg(optarg, check_interval) || *check_interval == 0) {
-                    return argument_error("Invalid -i value. Expected positive integer");
-                }
-                *check_interval_given = true;
                 break;
             case 'r':
                 if (!parse_float_arg(optarg, res)) {

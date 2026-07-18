@@ -2,7 +2,6 @@
 #define GRA26CAPSPROJECT_T146_BENCHMARK_H
 
 #include "main.h"
-#include <stddef.h>
 
 typedef struct {
     const char *column_label;

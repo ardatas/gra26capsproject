@@ -103,16 +103,13 @@ int main(int argc, char *argv[]) {
         .n = 100,
         .color = false,
     };
-    unsigned check_interval = 1;
-    bool check_interval_given = false;
     const char *output_filename = "output.bmp";
     bool run_test = false;
     bool should_exit = false;
 
     if (parse_args(argc, argv, &version, &benchmark_runs, &params.c, &params.start,
                    &params.width, &params.height, &params.res, &params.n,
-                   &check_interval, &check_interval_given, &params.color, &output_filename,
-                   &run_test, &should_exit) != EXIT_SUCCESS) {
+                   &params.color, &output_filename, &run_test, &should_exit) != EXIT_SUCCESS) {
         return EXIT_FAILURE;
     }
 
@@ -123,12 +120,6 @@ int main(int argc, char *argv[]) {
     if (version < 0 || version >= IMPLEMENTATION_COUNT) {
         return input_error("Only implementation versions 0 to 4 are available");
     }
-
-    if (check_interval_given && version != 1) {
-        return input_error("Only implementation version 1 supports the check interval");
-    }
-
-    julia_set_check_interval(check_interval);
 
     if (benchmark_runs < 0) {
         return input_error("Benchmark repetitions must not be negative");
