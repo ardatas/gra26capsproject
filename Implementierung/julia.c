@@ -1,6 +1,3 @@
-//
-// Created by Noah Schneider on 29.06.26.
-//
 #include <string.h>
 #include "utils.h"
 #include <complex.h>
@@ -89,7 +86,7 @@ void julia_V3(float complex c, float complex start, size_t width, ssize_t height
     }
 }
 
-void julia(float complex c, float complex start, size_t width, ssize_t height, float res, unsigned n, bool color, unsigned char* img) {
+void julia_V1(float complex c, float complex start, size_t width, ssize_t height, float res, unsigned n, bool color, unsigned char* img) {
 #if !defined(__SSE2__)
     julia_V3(c, start, width, height, res, n, color, img);
 #else
@@ -208,7 +205,7 @@ void julia(float complex c, float complex start, size_t width, ssize_t height, f
 #endif
 }
 
-void julia_V1(float complex c, float complex start, size_t width, ssize_t height, float res, unsigned n, bool color, unsigned char* img) {
+void julia(float complex c, float complex start, size_t width, ssize_t height, float res, unsigned n, bool color, unsigned char* img) {
 #if !defined(__SSE2__)
     julia_V3(c, start, width, height, res, n, color, img);
 #else
