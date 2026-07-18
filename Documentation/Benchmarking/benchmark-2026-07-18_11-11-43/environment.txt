@@ -1,0 +1,9 @@
+date=2026-07-18 11:11:44 +0200
+hostname=Erdeniz
+os=Linux 6.6.87.2-microsoft-standard-WSL2 x86_64
+architecture=x86_64
+cpu=12th Gen Intel(R) Core(TM) i7-1255U
+compiler=gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+cflags=-std=c17 -O3 -g -msse4.2 -Wall -Wextra -pedantic
+commit=1f544fe
+working_tree=clean
