@@ -62,7 +62,6 @@ static void print_help(void) {
     printf("  -c <real>,<imag>            julia constant c\n");
     printf("  -o <filename>               output BMP filename\n");
     printf("  -C, --color                 enable color output (default is grayscale)\n");
-    printf("  -P, --offset-sweep          write 64 color images for RGB offsets 0,16,32,48\n");
     printf("  -t, --test                  run all predefined benchmarking scenarios and exit\n");
     printf("  -h, --help                  show this help message\n");
     printf("  Example: ./project -V 1 -i 8 -B 100 -o output.bmp\n");
@@ -180,13 +179,11 @@ static bool parse_ssize_pair_arg(const char* text, ssize_t* first, ssize_t* seco
 int parse_args(int argc, char* argv[], int* version, int* benchmark_runs, float complex* c,
                float complex* start, ssize_t* width, ssize_t* height, float* res,
                unsigned* n, unsigned* check_interval, bool* check_interval_given,
-               bool* color, const char** output_filename, bool* run_test,
-               bool* offset_sweep, bool* should_exit) {
+               bool* color, const char** output_filename, bool* run_test, bool* should_exit) {
     static struct option long_options[] = {
         {"color", no_argument, NULL, 'C'},
         {"check-interval", required_argument, NULL, 'i'},
         {"help", no_argument, NULL, 'h'},
-        {"offset-sweep", no_argument, NULL, 'P'},
         {"test", no_argument, NULL, 't'},
         {0, 0, 0, 0},
     };
@@ -194,7 +191,7 @@ int parse_args(int argc, char* argv[], int* version, int* benchmark_runs, float 
     optind = 1;
     opterr = 0;
     int opt;
-    while ((opt = getopt_long(argc, argv, "V:B:s:d:n:i:r:c:o:ChPt", long_options, NULL)) != -1) {
+    while ((opt = getopt_long(argc, argv, "V:B:s:d:n:i:r:c:o:Cht", long_options, NULL)) != -1) {
         switch (opt) {
             case 'V':
                 if (!parse_int_arg(optarg, version)) {
@@ -257,10 +254,6 @@ int parse_args(int argc, char* argv[], int* version, int* benchmark_runs, float 
                 *output_filename = optarg;
                 break;
             case 'C':
-                *color = true;
-                break;
-            case 'P':
-                *offset_sweep = true;
                 *color = true;
                 break;
             case 't':

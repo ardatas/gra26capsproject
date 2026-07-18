@@ -10,18 +10,9 @@
 #endif
 
 static unsigned escape_check_interval = 1;
-static unsigned red_offset = 44;
-static unsigned green_offset = 44;
-static unsigned blue_offset = 26;
 
 void julia_set_check_interval(unsigned k) {
     escape_check_interval = k;
-}
-
-void julia_set_color_offsets(unsigned red, unsigned green, unsigned blue) {
-    red_offset = red % 64;
-    green_offset = green % 64;
-    blue_offset = blue % 64;
 }
 
 static void write_pixel(unsigned char* row, size_t x, unsigned i, unsigned n, bool color) {
@@ -33,9 +24,9 @@ static void write_pixel(unsigned char* row, size_t x, unsigned i, unsigned n, bo
         unsigned char blue = 0;
 
         if (i != n && n != 0) {
-            red = 255 - 4 * ((i + red_offset) % 64);
-            green = 255 - 4 * ((i + green_offset) % 64);
-            blue = 255 - 4 * ((i + blue_offset) % 64);
+            red = 255 - 4 * ((i +  44) % 64);
+            green = 255 - 4 * ((i + 44) % 64);
+            blue = 255 - 4 * ((i + 26) % 64);
         }
 
         row[4 * x] = blue;
@@ -73,9 +64,9 @@ static void write_pixel4(unsigned char* row, size_t x, __m128i counts, unsigned 
 
         _mm_storeu_si32(row + x, values8);
     } else {
-        const __m128i red = calculate_channel4(counts, (int) red_offset, julia_set_part);
-        const __m128i green = calculate_channel4(counts, (int) green_offset, julia_set_part);
-        const __m128i blue = calculate_channel4(counts, (int) blue_offset, julia_set_part);
+        const __m128i red = calculate_channel4(counts, 44, julia_set_part);
+        const __m128i green = calculate_channel4(counts, 44, julia_set_part);
+        const __m128i blue = calculate_channel4(counts, 26, julia_set_part);
 
         __m128i bgr0 = blue;
         // shift color to the correct part of the __m128i (little endian!)
