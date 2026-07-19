@@ -75,7 +75,7 @@ static void print_benchmark_table(FILE *target, const BenchmarkTest *test, const
     }
 }
 
-static int run_benchmark_test(const BenchmarkTest *test, unsigned repetitions, FILE *report) {
+static int run_benchmark_test(const BenchmarkTest *test, FILE *report) {
     if (test->case_count == 0 || test->case_count > SIZE_MAX / IMPLEMENTATION_COUNT) {
         return EXIT_FAILURE;
     }
@@ -107,7 +107,7 @@ static int run_benchmark_test(const BenchmarkTest *test, unsigned repetitions, F
         for (int version = 0; version < IMPLEMENTATION_COUNT; ++version) {
             BenchmarkResult *result = &results[(size_t) version * test->case_count + case_index];
 
-            if (benchmark_case(version, &test->cases[case_index], repetitions, image, result) != EXIT_SUCCESS) {
+            if (benchmark_case(version, &test->cases[case_index], test->cases[case_index].repetitions, image, result) != EXIT_SUCCESS) {
                 free(image);
                 free(results);
                 return EXIT_FAILURE;
@@ -135,6 +135,7 @@ int run_benchmark_suite(const CalculationParams *params, unsigned repetitions, c
     fprintf(report, "Runtime Benchmark (average of %u runs, time in milliseconds)\n", repetitions);
 
     static const unsigned n_values[] = {1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048};
+    static const unsigned n_repetition_multipliers[] = {16, 12, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
     static const char *n_labels[] = {
         "n=1", "n=2", "n=4", "n=8", "n=16", "n=32", "n=64", "n=128", "n=256", "n=512", "n=1024", "n=2048"
     };
@@ -146,6 +147,7 @@ int run_benchmark_suite(const CalculationParams *params, unsigned repetitions, c
         n_cases[i].column_label = n_labels[i];
         n_cases[i].params = *params;
         n_cases[i].params.n = n_values[i];
+        n_cases[i].repetitions = repetitions * n_repetition_multipliers[i];
     }
 
     BenchmarkTest n_test = {
@@ -170,6 +172,8 @@ int run_benchmark_suite(const CalculationParams *params, unsigned repetitions, c
         {.width = 1600, .height = -1200, .res = 0.0025f, .label = "1600x1200, res=0.0025"},
         {.width = 3200, .height = -2400, .res = 0.00125f, .label = "3200x2400, res=0.00125"},
     };
+    static const unsigned dimension_grayscale_repetition_multipliers[] = {100, 50, 20, 1, 1, 1, 1};
+    static const unsigned dimension_color_repetition_multipliers[] = {100, 50, 20, 1, 1, 1, 1};
 
     const size_t dimension_case_count = sizeof(dimension_values) / sizeof(dimension_values[0]);
     BenchmarkCase dimension_cases_grayscale[dimension_case_count];
@@ -182,16 +186,23 @@ int run_benchmark_suite(const CalculationParams *params, unsigned repetitions, c
         dimension_cases_grayscale[i].params.height = dimension_values[i].height;
         dimension_cases_grayscale[i].params.res = dimension_values[i].res;
         dimension_cases_grayscale[i].params.color = false;
+        dimension_cases_grayscale[i].repetitions =
+                repetitions * dimension_grayscale_repetition_multipliers[i];
 
         dimension_cases_color[i] = dimension_cases_grayscale[i];
         dimension_cases_color[i].params.color = true;
+        dimension_cases_color[i].repetitions = repetitions * dimension_color_repetition_multipliers[i];
     }
+
+    CalculationParams dimension_grayscale_base_params = *params;
+    dimension_grayscale_base_params.color = false;
+    CalculationParams dimension_color_base_params = *params;
+    dimension_color_base_params.color = true;
 
     const BenchmarkTest dimension_test_grayscale = {
         .title = "Image-dimension benchmark (grayscale)",
         .changed_parameter = "resolution scale",
-        .base_params = *params,
-        .base_params.color = false,
+        .base_params = dimension_grayscale_base_params,
         .cases = dimension_cases_grayscale,
         .case_count = dimension_case_count,
     };
@@ -199,24 +210,21 @@ int run_benchmark_suite(const CalculationParams *params, unsigned repetitions, c
     const BenchmarkTest dimension_test_color = {
         .title = "Image-dimension benchmark (colored)",
         .changed_parameter = "resolution scale",
-        .base_params = *params,
-        .base_params.color = true,
+        .base_params = dimension_color_base_params,
         .cases = dimension_cases_color,
         .case_count = dimension_case_count,
     };
 
     const size_t color_case_count = 2;
     BenchmarkCase color_cases[color_case_count];
-    color_cases[0] = (BenchmarkCase) {
-        .column_label = "Color=true",
-        .params = *params,
-        .params.color = true,
-    };
-    color_cases[1] = (BenchmarkCase) {
-        .column_label = "Color=false",
-        .params = *params,
-        .params.color = false,
-    };
+    color_cases[0].column_label = "Color=true";
+    color_cases[0].params = *params;
+    color_cases[0].params.color = true;
+    color_cases[0].repetitions = repetitions;
+    color_cases[1].column_label = "Color=false";
+    color_cases[1].params = *params;
+    color_cases[1].params.color = false;
+    color_cases[1].repetitions = repetitions;
 
     const BenchmarkTest color_test = {
         .title = "Color benchmark",
@@ -233,6 +241,9 @@ int run_benchmark_suite(const CalculationParams *params, unsigned repetitions, c
         "height=1", "height=2", "height=4", "height=8", "height=16", "height=100", "height=-100", "height=200",
         "height=-200", "height=300", "height=-300", "height=400", "height=-400", "height=500", "height=-500"
     };
+    static const unsigned height_repetition_multipliers[] = {
+        8000, 4000, 2000, 1000, 500, 100, 100, 1, 1, 1, 1, 1, 1, 1, 1
+    };
 
     const size_t height_case_count = 15;
     BenchmarkCase height_cases[height_case_count];
@@ -241,6 +252,7 @@ int run_benchmark_suite(const CalculationParams *params, unsigned repetitions, c
         height_cases[i].column_label = height_labels[i];
         height_cases[i].params = *params;
         height_cases[i].params.height = height_values[i];
+        height_cases[i].repetitions = repetitions * height_repetition_multipliers[i];
     }
 
     const BenchmarkTest height_test = {
@@ -255,6 +267,9 @@ int run_benchmark_suite(const CalculationParams *params, unsigned repetitions, c
     static const char *width_labels[] = {
         "width=1", "width=2", "width=3", "width=4", "width=5", "width=6", "width=7", "width=8", "width=9", "width=10"
     };
+    static const unsigned width_repetition_multipliers[] = {
+        4000, 3000, 2000, 2000, 1500, 1200, 1000, 1000, 1000, 1000
+    };
 
     const size_t width_case_count = 10;
     BenchmarkCase width_cases[width_case_count];
@@ -263,6 +278,7 @@ int run_benchmark_suite(const CalculationParams *params, unsigned repetitions, c
         width_cases[i].column_label = width_labels[i];
         width_cases[i].params = *params;
         width_cases[i].params.width = width_values[i];
+        width_cases[i].repetitions = repetitions * width_repetition_multipliers[i];
     }
 
     const BenchmarkTest width_test = {
@@ -287,6 +303,7 @@ int run_benchmark_suite(const CalculationParams *params, unsigned repetitions, c
         "start=2+0i",
         "start=10+10i",
     };
+    static const unsigned start_repetition_multipliers[] = {1, 1, 1, 20, 20};
 
     const size_t start_case_count = 5;
     BenchmarkCase start_cases[start_case_count];
@@ -295,6 +312,7 @@ int run_benchmark_suite(const CalculationParams *params, unsigned repetitions, c
         start_cases[i].column_label = start_labels[i];
         start_cases[i].params = *params;
         start_cases[i].params.start = start_values[i];
+        start_cases[i].repetitions = repetitions * start_repetition_multipliers[i];
     }
 
     const BenchmarkTest start_test = {
@@ -321,6 +339,7 @@ int run_benchmark_suite(const CalculationParams *params, unsigned repetitions, c
         "c=0+1i",
         "c=10+10i",
     };
+    static const unsigned c_repetition_multipliers[] = {1, 1, 1, 1, 1, 20};
 
     const size_t c_case_count = 6;
     BenchmarkCase c_cases[c_case_count];
@@ -329,6 +348,7 @@ int run_benchmark_suite(const CalculationParams *params, unsigned repetitions, c
         c_cases[i].column_label = c_labels[i];
         c_cases[i].params = *params;
         c_cases[i].params.c = c_values[i];
+        c_cases[i].repetitions = repetitions * c_repetition_multipliers[i];
     }
 
     const BenchmarkTest c_test = {
@@ -354,7 +374,7 @@ int run_benchmark_suite(const CalculationParams *params, unsigned repetitions, c
     int status = EXIT_SUCCESS;
 
     for (size_t i = 0; i < test_case_count; ++i) {
-        if (run_benchmark_test(&tests[i], repetitions, report) != EXIT_SUCCESS) {
+        if (run_benchmark_test(&tests[i], report) != EXIT_SUCCESS) {
             status = EXIT_FAILURE;
             break;
         }

@@ -6,6 +6,7 @@
 typedef struct {
     const char *column_label;
     CalculationParams params;
+    unsigned repetitions;
 } BenchmarkCase;
 
 typedef struct {
