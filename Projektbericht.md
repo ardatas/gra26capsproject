@@ -36,7 +36,8 @@ Correctness was verified via SHA256 hash comparison against the scalar reference
 
 Baseline speedup####
 Julia is about 3.1× faster than julia_V1 at default settings (4.30 ms vs. 13.18 ms).
-Effect of c--Speedup peaks (~3.6×) at c=0, since no pixel escapes and all lanes do equal work. It drops to ~2.1–2.2× for c=10+10i or c=1+0i, where pixels escape fast but not simultaneously — some lanes idle waiting for the slowest.
+
+Effect of c--Speedup peaks (~3.6×) at c=0, since no pixel escapes and all lanes do equal work. It drops to ~2.1–2.2× for c=10+10i or c=1+0i due to lane divergence where pixels escape non-simultaneously.
 
 Effect of n####
  Speedup rises from 2.1× (n=1) to a peak of ~3.15× around n=64, then falls to ~2.2× at very large n, once nearly every pixel needs the full count.
