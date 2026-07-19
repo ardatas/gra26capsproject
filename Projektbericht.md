@@ -43,7 +43,10 @@ Between the two counting methods, julia_count_optimization (subtract-based) is c
 
 
 > ### Arda
-    Write down project summary
+    I profiled the SIMD implementation, identified the active-mask bottleneck, and designed correctness and performance experiments. I
+    fixed escaped-lane reactivation, replaced masked addition with subtraction, made grayscale default, accepted n=0, introduced monotonic
+    timing and BMP dimension checks, developed and documented a strided escape check, and created the presentation, including
+    visualizations of benchmark results and runtime behavior.
 
 > ### Erdeniz
 I authored the project report in full and typeset the mathematical equations in LaTeX for both the report and the slides. I also generated several Julia set images by experimenting with different c and start values (including edge cases such as escaped-lane configurations or n=0), some of which were used in the presentation slides. 
