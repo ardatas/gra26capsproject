@@ -154,7 +154,7 @@ int main(int argc, char *argv[]) {
     }
 
     if (run_test) {
-        const unsigned repetitions = benchmark_runs > 0 ? (unsigned) benchmark_runs : 1000;
+        const unsigned repetitions = benchmark_runs > 0 ? (unsigned) benchmark_runs : 100;
 
         return run_benchmark_suite(&params, repetitions, "benchmark_results.txt");
     }
