@@ -1,4 +1,4 @@
-Runtime Benchmark (average of 100 runs, time in milliseconds)
+Runtime Benchmark (base repetition count: 100; time per run in milliseconds)
 
 Starting-complex-number benchmark
 Base parameters: c=-0.5125+0.5213i, start=-2.0000+1.5000i, width=800, height=-600, res=0.005, n=100, color=false

@@ -131,8 +131,8 @@ int run_benchmark_suite(const CalculationParams *params, unsigned repetitions, c
         return EXIT_FAILURE;
     }
 
-    fprintf(stdout, "Runtime Benchmark (average of %u runs, time in milliseconds)\n", repetitions);
-    fprintf(report, "Runtime Benchmark (average of %u runs, time in milliseconds)\n", repetitions);
+    fprintf(stdout, "Runtime Benchmark (base repetition count: %u; time per run in milliseconds)\n", repetitions);
+    fprintf(report, "Runtime Benchmark (base repetition count: %u; time per run in milliseconds)\n", repetitions);
 
     static const unsigned n_values[] = {1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048};
     static const unsigned n_repetition_multipliers[] = {16, 12, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
