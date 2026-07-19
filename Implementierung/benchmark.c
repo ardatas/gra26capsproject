@@ -101,6 +101,7 @@ static int run_benchmark_test(const BenchmarkTest *test, FILE *report) {
         unsigned char *image = malloc(image_size);
         if (image == NULL) {
             fprintf(stderr, "Could not allocate image buffer for benchmark case %zu\n", case_index);
+            free(results);
             return EXIT_FAILURE;
         }
 

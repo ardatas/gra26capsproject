@@ -133,12 +133,6 @@ int main(int argc, char *argv[]) {
         return input_error("Resolution must be a finite number");
     }
 
-    const double c_real = crealf(params.c);
-    const double c_imag = cimagf(params.c);
-    if (c_real * c_real + c_imag * c_imag > 4.0) {
-        return input_error("The magnitude of the Julia constant c must not exceed 2");
-    }
-
     if (params.width > INT32_MAX) {
         return input_error("Width must not be greater than 2147483647 for BMP output");
     }
