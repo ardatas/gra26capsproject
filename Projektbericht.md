@@ -51,7 +51,7 @@ Julia_count_optimization is consistently 0.5–1% faster than julia_simd — sma
 ## Workload Distribution
 
 > ### Arda
-    I profiled the SIMD implementation, identified the active-mask bottleneck, and designed correctness and performance experiments. I fixed escaped-lane reactivation, replaced masked addition with subtraction, made grayscale default, accepted n=0, added monotonic timing and BMP dimension checks, developed and documented a strided escape check, and created the presentation with benchmark and runtime visualizations.
+    I profiled SIMD, found the active-mask bottleneck, and designed correctness/performance experiments. I fixed escaped-lane reactivation, replaced masked addition with subtraction, made grayscale default, accepted n=0, added monotonic timing and BMP dimension checks, developed and documented a strided escape check, and created the presentation and benchmark/runtime visualizations.
 
 > ### Erdeniz
  
