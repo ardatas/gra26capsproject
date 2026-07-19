@@ -46,22 +46,20 @@ int input_error(const char *message) {
 
 static void print_help() {
     printf("Help Message\n");
-    printf("  -V <0..4>                   implementation version (default is 0)\n");
+    printf("  -V <0..1>                   implementation version (default is 0)\n");
     printf("      0                       SIMD with count-subtraction optimization + SIMD pixel writing\n");
     printf("      1                       scalar reference\n");
     printf("  -B <number>                 runtime measurement iterations (default is 0)\n");
     printf("  -s <real>,<imag>            start point\n");
     printf("  -d <width>,<height>         image dimensions in pixels\n");
     printf("  -n <number>                 maximum iterations per pixel (0 through INT_MAX)\n");
-    printf("  -i, --check-interval <K>   check fully escaped SIMD blocks every K iterations\n");
-    printf("                              default is 1; supported by V1 only\n");
     printf("  -r <number>                 step per pixel\n");
     printf("  -c <real>,<imag>            julia constant c\n");
     printf("  -o <filename>               output BMP filename\n");
     printf("  -C, --color                 enable color output (default is grayscale)\n");
     printf("  -t, --test                  run all predefined benchmarking scenarios and exit\n");
     printf("  -h, --help                  show this help message\n");
-    printf("  Example: ./project -V 1 -i 8 -B 100 -o output.bmp\n");
+    printf("  Example: ./project -V 1 -o output.bmp\n");
 }
 
 static bool is_allowed_output_filename(const char *filename) {
@@ -178,7 +176,6 @@ int parse_args(const int argc, char *argv[], int *version, int *benchmark_runs, 
                unsigned *n, bool *color, const char **output_filename, bool *run_test, bool *should_exit) {
     static struct option long_options[] = {
         {.name = "color", .has_arg = no_argument, .flag = NULL, .val = 'C'},
-        {.name = "check-interval", .has_arg = required_argument, .flag = NULL, .val = 'i'},
         {.name = "help", .has_arg = no_argument, .flag = NULL, .val = 'h'},
         {.name = "test", .has_arg = no_argument, .flag = NULL, .val = 't'},
         {.name = 0, .has_arg = 0, .flag = NULL, .val = 0},
@@ -327,7 +324,6 @@ int write_bmp(const char *filename, ssize_t width, ssize_t height, bool color, c
         return EXIT_FAILURE;
     }
 
-    // TODO note in the projektbericht the difference between defining a color palette and just using 32 bit for non color
     if (!color) {
         // color palette with grayscale (0x000000 to 0xFFFFFF with equal r g and b values)
         for (uint32_t i = 0; i < 256; ++i) {

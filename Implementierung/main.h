@@ -16,7 +16,7 @@ typedef struct {
 } CalculationParams;
 
 enum {
-    IMPLEMENTATION_COUNT = 4,
+    IMPLEMENTATION_COUNT = 2,
 };
 
 void calculate_version(int version, const CalculationParams *params, unsigned char *image);

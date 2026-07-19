@@ -20,14 +20,6 @@ void calculate_version(int version, const CalculationParams *params, unsigned ch
             julia_V1(params->c, params->start, width, params->height,
                      params->res, params->n, params->color, image);
             break;
-        case 2:
-            julia_simd(params->c, params->start, width, params->height,
-                       params->res, params->n, params->color, image);
-            break;
-        case 3:
-            julia_count_optimization(params->c, params->start, width, params->height,
-                                     params->res, params->n, params->color, image);
-            break;
         default:
             break;
     }
@@ -118,7 +110,7 @@ int main(int argc, char *argv[]) {
     }
 
     if (version < 0 || version >= IMPLEMENTATION_COUNT) {
-        return input_error("Only implementation versions 0 to 4 are available");
+        return input_error("Only implementation versions 0 to 1 are available");
     }
 
     if (benchmark_runs < 0) {
