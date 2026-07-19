@@ -20,17 +20,14 @@ The scalar version (julia_V1) computes one pixel at a time and is used as the re
 Two ways of counting escaped pixels were implemented: julia_simd first checks which lanes are active (AND with a mask), then adds 1 to them.  julia/julia_count_optimization instead subtract the active mask directly from the counter, since an all-ones mask equals -1 in two's complement — doing the same job in one instruction instead of two. A second, independent difference is how the four computed pixels are written to the image: julia_count_optimization stores the four counters to memory and writes each pixel individually (scalar write_pixel, called four times), while julia additionally vectorizes this step (write_pixel4), computing the color channels for all four pixels at once and writing them to memory in a single store.
 
 ### Benchmarking Methods
-Benchmarks show the SIMD implementation julia achieves a speedup of roughly 3.5-4x over the scalar baseline 
-julia_V1 for typical inputs(0.005 seconds vs. 0.018 seconds per run), with julia, julia_V1 and julia_V2 performing nearly identically regardless of the increment tecnique used. However, this speedup is not constant, it drops to nearly 2.8x at high iteration counts(n=1000) and to as low as 1.4x for rapidly diverging inputs(c=0+1i).Speedup also improves with larger image sizes and iteration counts 
+Each parameter of julia was benchmarked independently, holding all others at default values (c=-0.5125+0.5213i, start=-2+1.5i, 800x600, res=0.005, n=100, grayscale), to isolate its individual effect on SIMD speedup: start and c (escape behavior and lane divergence), image resolution and dimensions (overhead amortization), maximum iteration count n (scaling with per-pixel work), color output (per-pixel write cost), and small widths below one SIMD register (remainder-handling overhead). Each measurement is the average of 100 runs via the -B flag.
 
 ### Test Environment
 Benchmarks were run on an AMD Ryzen 9 5950X (16-core) under Linux 5.15 (WSL2), compiled with GCC 14.2.0 using std=c17 -03  -msse4.2. All measurements used the -B flag with the repetition counts listed per scenario in the benchmark logs.
 
 
 ## Performance and Correctness Analysis
-V3 is the scaled, unoptimized version, where the runtime is very high.
-
-
+Correctness was verified by comparing every implementation's output against the scalar reference pixel-by-pixel across more than 30 distinct scenarios, covering typical parameter ranges as well as targeted edge cases: image widths from 1 to 800 (systematically covering both remainder and non-remainder cases for the four-wide SIMD lanes), extreme c/start values (c=0, a starting point outside the escape radius, a configuration causing single-lane early escape), zero iterations (n=0), and both BMP row orderings (top-down and bottom-up). The check-interval variant (K=1,2,4,8,16,1000) was additionally verified to produce identical output to the reference regardless of K, confirming that adjusting the escape-check frequency is a pure performance optimization with no effect on correctness. All test cases passed with byte-identical output.
 
 
 ## Workload Distribution
