@@ -20,11 +20,18 @@ Tested on a system with an AMD Ryzen 9 5950X processor, 3.4 GHZ, 32 GB of Ram, D
 
 ## Performance and Correctness Analysis
 Correctness was verified via SHA256 hash comparison against the scalar reference across 30+ scenarios: widths 1–800 (covering remainder and non-remainder SIMD cases), extreme c/start values (c=0, a starting point outside the escape radius, single-lane early escape), and n=0. The check-interval variant (K=1,2,4,8,16,1000) produced identical output regardless of K, confirming it's a pure performance optimization. All cases passed byte-identical.
-Baseline speedup--Julia is about 3.1× faster than julia_V1 at default settings (4.30 ms vs. 13.18 ms).
+Baseline speedup####
+Julia is about 3.1× faster than julia_V1 at default settings (4.30 ms vs. 13.18 ms).
 Effect of c--Speedup peaks (~3.6×) at c=0, since no pixel escapes and all lanes do equal work. It drops to ~2.1–2.2× for c=10+10i or c=1+0i, where pixels escape fast but not simultaneously — some lanes idle waiting for the slowest.
-Effect of n-- Speedup rises from 2.1× (n=1) to a peak of ~3.15× around n=64, then falls to ~2.2× at very large n, once nearly every pixel needs the full count.
-Effect of image size--Speedup climbs steadily (2.5× to 3.2×) as the image grows, since fixed setup cost matters proportionally less. Below 4-pixel widths, SIMD gives no benefit — sometimes it's slower — since a full lane group never forms but setup cost is still paid.
-Counting method comparison--julia_count_optimization is consistently 0.5–1% faster than julia_simd — small but recurring, likely a real effect rather than noise.
+
+Effect of n####
+ Speedup rises from 2.1× (n=1) to a peak of ~3.15× around n=64, then falls to ~2.2× at very large n, once nearly every pixel needs the full count.
+
+Effect of image size####
+Speedup climbs steadily (2.5× to 3.2×) as the image grows, since fixed setup cost matters proportionally less. Below 4-pixel widths, SIMD gives no benefit — sometimes it's slower — since a full lane group never forms but setup cost is still paid.
+
+Counting method comparison####
+Julia_count_optimization is consistently 0.5–1% faster than julia_simd — small but recurring, likely a real effect rather than noise.
 
 
 ## Workload Distribution
