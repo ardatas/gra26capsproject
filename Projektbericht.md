@@ -44,6 +44,8 @@ Julia_count_optimization is consistently 0.5–1% faster than julia_simd — sma
 
 > ### Erdeniz
  
+    I wrote the project report and formatted the mathematical parts using LaTeX. I prepared the mathematical section for the presentation, conducted correctness checks by testing visual outputs under different parameters, and added these images to the slides. Additionally, I ran benchmarks to evaluate the effectiveness of the optimizations.
+
 
 
 > ### Noah
